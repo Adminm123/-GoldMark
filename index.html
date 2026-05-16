@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ห้างทอง รัตนกาญจน์ — ระบบคำนวณราคาทอง</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+:root {
+  --bg: #0d0814;
+  --bg-2: #150f1c;
+  --surface: rgba(28, 20, 36, 0.78);
+  --surface-2: rgba(36, 26, 44, 0.82);
+  --surface-3: rgba(48, 32, 54, 0.85);
+  --border: rgba(180, 140, 80, 0.22);
+  --border-bright: rgba(220, 180, 110, 0.38);
+  --gold: #e6c779;
+  --gold-bright: #f8e2a8;
+  --gold-soft: #c9a24a;
+  --gold-deep: #8b6420;
+  --gold-glow: rgba(248, 226, 168, 0.4);
+  --crimson: #8b1538;
+  --navy: #1a2b6e;
+  --text: #fbf3df;
+  --text-dim: #e0cea2;
+  --text-mute: #a89373;
+  --up: #8ed1a6;
+  --down: #e09478;
+  --serif-th: 'Noto Serif Thai', serif;
+  --serif-en: 'Playfair Display', 'Noto Serif Thai', serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif-th);
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: -10%;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 55% 45% at 15% 12%, rgba(180,30,60,0.55), transparent 65%),
+    radial-gradient(ellipse 60% 50% at 85% 85%, rgba(40,60,200,0.5), transparent 65%),
+    radial-gradient(ellipse 45% 35% at 75% 25%, rgba(150,40,110,0.32), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 25% 75%, rgba(60,30,150,0.32), transparent 70%),
+    linear-gradient(135deg, #1f0a18 0%, #0d0814 45%, #0a0f24 100%);
+  animation: ambientShift 22s ease-in-out infinite alternate;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(248,226,168,0.08), transparent 50%),
+    radial-gradient(circle 1px at 20% 30%, rgba(248,226,168,0.4) 100%, transparent 0),
+    radial-gradient(circle 1px at 80% 60%, rgba(248,226,168,0.3) 100%, transparent 0),
+    radial-gradient(circle 1px at 35% 70%, rgba(248,226,168,0.35) 100%, transparent 0),
+    radial-gradient(circle 1px at 65% 20%, rgba(248,226,168,0.3) 100%, transparent 0),
+    radial-gradient(circle 1px at 90% 40%, rgba(248,226,168,0.25) 100%, transparent 0);
+  background-size: 100% 100%, 800px 800px, 800px 800px, 800px 800px, 800px 800px, 800px 800px;
+  background-position: 0 0, 0 0, 120px 200px, 400px 80px, 50px 500px, 600px 380px;
+  animation: starDrift 60s linear infinite;
+}
+@keyframes ambientShift {
+  0%   { transform: translate(0,0) scale(1); }
+  50%  { transform: translate(-2%,1.5%) scale(1.04); }
+  100% { transform: translate(2%,-1%) scale(1.02); }
+}
+@keyframes starDrift {
+  to { background-position: 0 0, 30px 60px, 150px 260px, 430px 140px, 80px 560px, 630px 440px; }
+}
+button { font-family: inherit; cursor: pointer; }
+input, select { font-family: inherit; }
+
+/* Header */
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(248,226,168,0.04), transparent), rgba(13,8,20,0.4);
+  backdrop-filter: blur(10px);
+}
+.site-header .inner {
+  max-width: 1280px; margin: 0 auto; padding: 36px 32px 30px;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+}
+.brand { display: flex; align-items: center; gap: 18px; }
+.brand-mark {
+  width: 60px; height: 60px; border: 1px solid var(--gold);
+  position: relative; display: grid; place-items: center;
+  background: radial-gradient(circle, rgba(248,226,168,0.25), transparent 70%);
+  animation: markGlow 4s ease-in-out infinite;
+}
+@keyframes markGlow {
+  0%,100% { box-shadow: 0 0 0 rgba(248,226,168,0), inset 0 0 0 rgba(248,226,168,0); }
+  50%     { box-shadow: 0 0 30px rgba(248,226,168,0.35), inset 0 0 18px rgba(248,226,168,0.18); }
+}
+.brand-mark::before, .brand-mark::after {
+  content: ''; position: absolute; border: 1px solid var(--gold-soft); inset: 4px; pointer-events: none;
+}
+.brand-mark::after { inset: 8px; opacity: 0.5; }
+.brand-mark .glyph {
+  font-family: var(--serif-en); font-style: italic; font-weight: 700;
+  font-size: 22px; color: var(--gold-bright); z-index: 1; line-height: 1;
+}
+.brand-text .name-th { font-weight: 700; font-size: 20px; letter-spacing: 0.04em; line-height: 1.1; }
+.brand-text .name-en {
+  font-family: var(--serif-en); font-style: italic; font-size: 13px;
+  color: var(--gold); letter-spacing: 0.15em; margin-top: 4px;
+}
+.header-meta { text-align: right; font-size: 13px; color: var(--text-dim); }
+.header-meta .label { font-size: 11px; color: var(--text-mute); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 2px; }
+.header-meta .value { font-family: var(--mono); color: var(--gold-bright); font-size: 15px; letter-spacing: 0.06em; }
+
+/* Page */
+.page { max-width: 1280px; margin: 0 auto; padding: 0 32px 80px; }
+.page > section { animation: sectionRise 0.7s cubic-bezier(.2,.7,.2,1) backwards; }
+.page > section:nth-child(1) { animation-delay: 0.05s; }
+.page > section:nth-child(2) { animation-delay: 0.15s; }
+.page > section:nth-child(3) { animation-delay: 0.25s; }
+.page > section:nth-child(4) { animation-delay: 0.35s; }
+@keyframes sectionRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Section heading */
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; margin: 64px 0 24px; border-bottom: 1px solid var(--border);
+  padding-bottom: 14px; position: relative;
+}
+.section-head::after {
+  content: ''; position: absolute; left: 0; bottom: -1px;
+  height: 1px; width: 80px;
+  background: linear-gradient(90deg, var(--gold-bright), transparent);
+}
+.section-head .title { display: flex; align-items: baseline; gap: 16px; }
+.section-head .index {
+  font-family: var(--serif-en); font-style: italic; font-size: 14px;
+  color: var(--gold-bright); letter-spacing: 0.1em; text-shadow: 0 0 12px var(--gold-glow);
+}
+.section-head h2 { font-weight: 700; font-size: 24px; letter-spacing: 0.04em; color: var(--text); margin: 0; }
+.section-head .meta { font-size: 12px; color: var(--text-mute); letter-spacing: 0.06em; font-family: var(--mono); }
+
+/* Prices */
+.prices {
+  display: grid; grid-template-columns: 1fr; gap: 1px;
+  background: var(--border); border: 1px solid var(--border-bright);
+  position: relative; overflow: hidden;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(248,226,168,0.06), inset 0 1px 0 rgba(248,226,168,0.08);
+  backdrop-filter: blur(10px);
+}
+.prices::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(248,226,168,0.08) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: priceShimmer 7s ease-in-out infinite; pointer-events: none; z-index: 1;
+}
+@keyframes priceShimmer {
+  0%,100% { background-position: 200% 0; }
+  50%     { background-position: -50% 0; }
+}
+.price-card {
+  background: var(--surface); padding: 44px 48px;
+  position: relative; z-index: 2; backdrop-filter: blur(14px);
+}
+.price-card::before, .price-card::after {
+  content: ''; position: absolute; width: 28px; height: 28px;
+  border: 1px solid var(--gold-soft); opacity: 0.55; pointer-events: none;
+}
+.price-card::before { top: 14px; left: 14px; border-right: none; border-bottom: none; }
+.price-card::after  { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+.price-card .type-label {
+  font-family: var(--serif-en); font-style: italic; font-size: 13px;
+  color: var(--gold-bright); letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 6px;
+}
+.price-card .type-th { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: 0.05em; margin: 0 0 28px; }
+.price-card .purity {
+  display: inline-block; font-family: var(--mono); font-size: 10px; color: var(--gold);
+  border: 1px solid var(--gold-soft); padding: 2px 8px; margin-left: 10px;
+  letter-spacing: 0.1em; vertical-align: middle; position: relative; top: -3px;
+}
+.price-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+  padding-top: 24px; border-top: 1px solid var(--border); position: relative;
+}
+.price-row::before {
+  content: ''; position: absolute; left: 50%; top: 24px; bottom: 0; width: 1px;
+  background: linear-gradient(180deg, transparent, var(--gold-soft) 30%, var(--gold-soft) 70%, transparent);
+  opacity: 0.4;
+}
+.price-row .col .label {
+  font-size: 12px; color: var(--text-dim); letter-spacing: 0.16em; margin-bottom: 10px;
+  text-transform: uppercase; font-family: var(--serif-en); font-style: italic;
+}
+.price-row .col .label::before {
+  content: ''; display: inline-block; width: 14px; height: 1px;
+  background: var(--gold); vertical-align: middle; margin-right: 8px;
+}
+.price-row .col .value {
+  font-family: var(--mono); font-weight: 500; font-size: 44px;
+  letter-spacing: 0.02em; line-height: 1.05;
+  background: linear-gradient(95deg, #c9a24a 0%, #fff4cc 35%, #f8e2a8 50%, #fff4cc 65%, #c9a24a 100%);
+  background-size: 250% auto; -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; animation: goldSheen 6s linear infinite;
+}
+@keyframes goldSheen { to { background-position: -250% center; } }
+.price-row .col .unit { font-size: 12px; color: var(--text-mute); margin-top: 8px; letter-spacing: 0.04em; }
+.delta {
+  position: absolute; top: 36px; right: 48px; font-family: var(--mono); font-size: 14px;
+  z-index: 3; padding: 6px 12px; border: 1px solid currentColor;
+  border-radius: 999px; background: rgba(0,0,0,0.25);
+}
+.delta.up { color: var(--up); }
+.delta.down { color: var(--down); }
+
+/* Chart */
+.chart-card {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 28px 32px 16px; backdrop-filter: blur(14px);
+  box-shadow: 0 20px 50px -20px rgba(0,0,0,0.5);
+}
+.chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 16px; flex-wrap: wrap; }
+.chart-title { font-size: 14px; color: var(--text-dim); letter-spacing: 0.04em; }
+.chart-controls { display: flex; border: 1px solid var(--border); }
+.chart-controls button {
+  background: transparent; border: none; color: var(--text-mute);
+  padding: 6px 14px; font-size: 12px; letter-spacing: 0.08em;
+  border-right: 1px solid var(--border); transition: all 0.2s;
+}
+.chart-controls button:last-child { border-right: none; }
+.chart-controls button.active { background: rgba(230,199,121,0.16); color: var(--gold-bright); }
+.chart-svg { width: 100%; height: 220px; display: block; }
+.chart-stats {
+  display: flex; gap: 32px; font-family: var(--mono); font-size: 12px; color: var(--text-dim);
+  margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap;
+}
+.chart-stats span b { color: var(--text); font-weight: 500; margin-left: 6px; }
+
+/* Calculator */
+.calc-layout {
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: 1px;
+  background: var(--border); border: 1px solid var(--border);
+  box-shadow: 0 20px 50px -20px rgba(0,0,0,0.5);
+}
+.calc-form, .calc-result { background: var(--surface); padding: 36px; backdrop-filter: blur(14px); }
+.calc-result {
+  background: linear-gradient(180deg, rgba(230,199,121,0.08), transparent 40%), var(--surface-2);
+}
+.field-group { display: grid; gap: 22px; }
+.field label {
+  display: block; font-size: 12px; color: var(--text-mute);
+  letter-spacing: 0.1em; margin-bottom: 8px; text-transform: uppercase;
+  font-family: var(--serif-en); font-style: italic;
+}
+.field label .th { font-family: var(--serif-th); font-style: normal; text-transform: none; color: var(--text-dim); margin-right: 8px; }
+.seg { display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--border-bright); }
+.seg button {
+  background: transparent; border: none; border-right: 1px solid var(--border-bright);
+  color: var(--text-dim); padding: 13px 8px; font-size: 14px; transition: all 0.2s;
+}
+.seg button:last-child { border-right: none; }
+.seg button.active {
+  background: linear-gradient(180deg, rgba(230,199,121,0.28), rgba(230,199,121,0.12));
+  color: var(--gold-bright); font-weight: 600; box-shadow: inset 0 0 0 1px var(--gold);
+}
+.weight-input {
+  display: grid; grid-template-columns: 1fr auto; align-items: stretch;
+  border: 1px solid var(--border-bright); background: var(--bg-2);
+}
+.weight-input input {
+  background: transparent; border: none; color: var(--gold-bright);
+  font-family: var(--mono); font-size: 28px; padding: 14px 18px; outline: none;
+  font-weight: 500; width: 100%; min-width: 0;
+}
+.weight-input input::placeholder { color: var(--text-mute); }
+.weight-input .unit-pick { display: flex; border-left: 1px solid var(--border-bright); }
+.weight-input .unit-pick button {
+  background: transparent; border: none; color: var(--text-mute); padding: 0 14px;
+  font-size: 13px; border-right: 1px solid var(--border); transition: all 0.2s; min-width: 56px;
+}
+.weight-input .unit-pick button:last-child { border-right: none; }
+.weight-input .unit-pick button.active { background: rgba(230,199,121,0.16); color: var(--gold-bright); }
+.extra-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.simple-input { border: 1px solid var(--border-bright); background: var(--bg-2); }
+.simple-input input {
+  background: transparent; border: none; color: var(--text);
+  font-family: var(--mono); font-size: 16px; padding: 12px 14px; outline: none; width: 100%;
+}
+
+/* Result */
+.result-eyebrow {
+  font-family: var(--serif-en); font-style: italic; font-size: 12px;
+  color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px;
+}
+.result-title { font-size: 18px; color: var(--text); margin-bottom: 24px; letter-spacing: 0.04em; }
+.result-amount {
+  font-family: var(--mono); font-size: 56px; font-weight: 500; line-height: 1; margin: 18px 0 8px;
+  background: linear-gradient(95deg, #c9a24a 0%, #fff4cc 35%, #f8e2a8 50%, #fff4cc 65%, #c9a24a 100%);
+  background-size: 250% auto; -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; animation: goldSheen 6s linear infinite;
+}
+.result-amount .baht-sign {
+  font-family: var(--serif-th); font-size: 24px; color: var(--gold);
+  margin-right: 12px; vertical-align: top; position: relative; top: 14px;
+  -webkit-text-fill-color: var(--gold); background: none; animation: none;
+}
+.result-amount.zero { background: none; -webkit-text-fill-color: var(--text-mute); animation: none; }
+.result-sub { font-size: 13px; color: var(--text-mute); letter-spacing: 0.04em; margin-bottom: 28px; }
+.result-breakdown { border-top: 1px solid var(--border); padding-top: 18px; display: grid; gap: 10px; font-size: 13px; }
+.result-breakdown .row { display: flex; justify-content: space-between; align-items: baseline; color: var(--text-dim); }
+.result-breakdown .row .v { font-family: var(--mono); color: var(--text); }
+.result-breakdown .row.total { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 6px; font-size: 15px; }
+.result-breakdown .row.total .v { color: var(--gold-bright); font-size: 18px; font-weight: 500; }
+.action-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-top: 32px; }
+.btn-primary {
+  background: linear-gradient(180deg, #f4dba0, #c9a24a); color: #1a1208; font-weight: 700;
+  border: 1px solid var(--gold-bright); padding: 14px 22px; font-size: 14px; letter-spacing: 0.1em;
+  box-shadow: 0 8px 32px -8px rgba(230,199,121,0.6), inset 0 1px 0 rgba(255,255,255,0.35);
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: linear-gradient(180deg, #fae4b3, #e6c779); transform: translateY(-1px); }
+.btn-primary:disabled { background: var(--surface-3); color: var(--text-mute); border-color: var(--border); box-shadow: none; cursor: not-allowed; }
+.btn-ghost {
+  background: transparent; color: var(--text-mute); border: 1px solid var(--border-bright);
+  padding: 14px 22px; font-size: 14px; letter-spacing: 0.1em; transition: all 0.2s;
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--gold-soft); }
+
+/* History */
+.history-search { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.history-search .search-input {
+  flex: 1; min-width: 240px; border: 1px solid var(--border-bright);
+  background: var(--bg-2); display: flex; align-items: center; padding: 0 14px;
+}
+.history-search input {
+  background: transparent; border: none; color: var(--text);
+  font-family: var(--mono); font-size: 14px; padding: 12px 0; outline: none; width: 100%;
+}
+.seg-4 { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--border-bright); min-width: 280px; }
+.seg-4 button {
+  background: transparent; border: none; border-right: 1px solid var(--border-bright);
+  color: var(--text-dim); padding: 13px 8px; font-size: 13px; transition: all 0.2s;
+}
+.seg-4 button:last-child { border-right: none; }
+.seg-4 button.active { background: linear-gradient(180deg, rgba(230,199,121,0.28), rgba(230,199,121,0.12)); color: var(--gold-bright); font-weight: 600; box-shadow: inset 0 0 0 1px var(--gold); }
+.history-table {
+  width: 100%; border-collapse: collapse; border: 1px solid var(--border);
+  background: var(--surface); font-size: 13px; backdrop-filter: blur(14px);
+  box-shadow: 0 20px 50px -20px rgba(0,0,0,0.5);
+}
+.history-table th {
+  text-align: left; font-family: var(--serif-en); font-style: italic; font-weight: 400;
+  font-size: 11px; color: var(--gold); letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 14px 18px; border-bottom: 1px solid var(--border-bright); background: var(--surface-2);
+}
+.history-table th .th { display: block; font-family: var(--serif-th); font-style: normal; color: var(--text-dim); text-transform: none; letter-spacing: 0.04em; font-size: 12px; margin-top: 2px; }
+.history-table td { padding: 16px 18px; border-top: 1px solid var(--border); color: var(--text-dim); vertical-align: middle; }
+.history-table tr:hover td { background: rgba(201,162,74,0.03); }
+.history-table .code { font-family: var(--mono); color: var(--gold-bright); font-size: 13px; letter-spacing: 0.06em; }
+.history-table .amount { font-family: var(--mono); color: var(--text); text-align: right; font-weight: 500; }
+.history-table .badge { display: inline-block; font-size: 11px; padding: 2px 10px; border: 1px solid currentColor; letter-spacing: 0.06em; }
+.history-table .badge.buy { color: var(--up); }
+.history-table .badge.sell { color: var(--down); }
+.history-table .badge.trade { color: var(--gold); }
+.history-table .badge.bar { color: var(--text-dim); }
+.history-table .icon-btn {
+  background: transparent; border: 1px solid var(--border-bright); color: var(--gold);
+  padding: 6px 10px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; transition: all 0.2s;
+}
+.history-table .icon-btn:hover { background: rgba(201,162,74,0.08); border-color: var(--gold-soft); }
+.history-empty { background: var(--surface); border: 1px solid var(--border); padding: 60px 20px; text-align: center; color: var(--text-mute); }
+.history-empty .symbol { font-family: var(--serif-en); font-style: italic; font-size: 36px; color: var(--gold-soft); margin-bottom: 8px; }
+
+/* Receipt */
+.receipt-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+  z-index: 100; display: grid; place-items: center; padding: 20px; overflow-y: auto; animation: fade 0.2s;
+}
+@keyframes fade { from { opacity: 0; } }
+.receipt {
+  background: #faf6ec; color: #1a1208; width: 100%; max-width: 480px; padding: 48px 40px;
+  font-family: var(--serif-th); position: relative; box-shadow: 0 40px 80px rgba(0,0,0,0.5); border: 1px solid #c9a24a;
+}
+.receipt::before { content: ''; position: absolute; inset: 8px; border: 1px solid #c9a24a; pointer-events: none; }
+.receipt-header { text-align: center; border-bottom: 1px dashed #8b6420; padding-bottom: 22px; margin-bottom: 24px; }
+.receipt-mark { font-family: var(--serif-en); font-style: italic; font-size: 30px; font-weight: 700; color: #8b6420; }
+.receipt-shop { font-size: 18px; font-weight: 700; letter-spacing: 0.06em; }
+.receipt-sub { font-size: 11px; color: #6e4f1c; letter-spacing: 0.16em; text-transform: uppercase; margin-top: 6px; font-family: var(--serif-en); }
+.receipt-doc { font-size: 14px; letter-spacing: 0.06em; color: #6e4f1c; margin-top: 16px; }
+.receipt-code { display: inline-block; font-family: var(--mono); font-size: 16px; color: #1a1208; border: 1px solid #8b6420; padding: 6px 16px; margin-top: 8px; letter-spacing: 0.1em; font-weight: 600; background: #fff; }
+.receipt-body { font-size: 14px; }
+.receipt-body .row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px dotted #d4b878; }
+.receipt-body .row .k { color: #6e4f1c; }
+.receipt-body .row .v { font-family: var(--mono); color: #1a1208; font-weight: 500; }
+.receipt-total { margin-top: 18px; padding: 18px 16px; background: #1a1208; color: #faf6ec; display: flex; justify-content: space-between; align-items: baseline; }
+.receipt-total .k { font-size: 14px; letter-spacing: 0.1em; color: #c9a24a; }
+.receipt-total .v { font-family: var(--mono); font-size: 24px; font-weight: 600; color: #e6c779; }
+.receipt-qr { display: flex; align-items: center; gap: 14px; margin-top: 22px; padding: 16px; background: #fff; border: 1px solid #d4b878; }
+.qr-grid { width: 72px; height: 72px; background-image: linear-gradient(90deg, #1a1208 50%, transparent 50%), linear-gradient(#1a1208 50%, transparent 50%); background-size: 8px 8px, 8px 8px; background-position: 0 0, 4px 4px; flex-shrink: 0; position: relative; overflow: hidden; }
+.qr-grid::before, .qr-grid::after { content: ''; position: absolute; width: 18px; height: 18px; border: 4px solid #1a1208; background: #fff; box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 6px #1a1208; }
+.qr-grid::before { top: 0; left: 0; }
+.qr-grid::after { top: 0; right: 0; }
+.receipt-qr .text { font-size: 11px; color: #6e4f1c; letter-spacing: 0.04em; line-height: 1.5; }
+.receipt-qr .text b { display: block; font-family: var(--mono); color: #1a1208; font-size: 13px; }
+.receipt-foot { margin-top: 26px; padding-top: 20px; border-top: 1px dashed #8b6420; text-align: center; font-size: 11px; color: #6e4f1c; line-height: 1.7; }
+.receipt-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: center; }
+.receipt-actions button { background: transparent; border: 1px solid var(--gold-soft); color: var(--gold-bright); padding: 10px 18px; font-size: 13px; }
+.receipt-actions button:hover { background: rgba(201,162,74,0.1); }
+.receipt-actions .close { color: var(--text-mute); border-color: var(--border-bright); }
+
+/* Footer */
+.site-foot { border-top: 1px solid var(--border); margin-top: 80px; padding: 40px 32px; text-align: center; font-size: 12px; color: var(--text-mute); letter-spacing: 0.06em; }
+.site-foot .ornament-row { margin-bottom: 14px; color: var(--gold-soft); font-family: var(--serif-en); font-style: italic; letter-spacing: 0.2em; }
+
+/* Responsive */
+@media (max-width: 880px) {
+  .site-header .inner { padding: 24px 20px 18px; flex-direction: column; align-items: flex-start; }
+  .header-meta { text-align: left; }
+  .page { padding: 0 20px 60px; }
+  .section-head { margin-top: 44px; }
+  .section-head h2 { font-size: 19px; }
+  .price-card { padding: 32px 22px; }
+  .price-row .col .value { font-size: 32px; }
+  .price-row { gap: 24px; }
+  .delta { top: 22px; right: 22px; font-size: 12px; padding: 4px 10px; }
+  .calc-layout { grid-template-columns: 1fr; }
+  .calc-form, .calc-result { padding: 24px 20px; }
+  .result-amount { font-size: 38px; }
+  .weight-input input { font-size: 22px; }
+  .action-row { grid-template-columns: 1fr; }
+  .extra-grid { grid-template-columns: 1fr; }
+  .receipt { padding: 32px 22px; }
+}
+@media (max-width: 540px) {
+  .history-table thead { display: none; }
+  .history-table, .history-table tbody, .history-table tr, .history-table td { display: block; width: 100%; }
+  .history-table tr { padding: 14px; border-top: 1px solid var(--border); }
+  .history-table td { border: none; padding: 4px 0; }
+  .history-table td.amount { text-align: left; font-size: 18px; padding-top: 8px; }
+  .price-row { grid-template-columns: 1fr; gap: 14px; }
+}
+@media print {
+  body { background: white; color: black; }
+  .site-header, .prices, .chart-card, .calc-layout, .history-section, .site-foot { display: none !important; }
+  .receipt-backdrop { position: static; background: white; backdrop-filter: none; padding: 0; }
+  .receipt { box-shadow: none; max-width: none; border: 1px solid #8b6420; }
+}
+:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+/* ── Supabase ── */
+const SUPABASE_URL = 'https://cplpzqijglqrtnfrepsu.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwbHB6cWlqZ2xxcnRuZnJlcHN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDE2NDMsImV4cCI6MjA5NDUxNzY0M30.sbvDH-1SmWqURDKCP0eYEvGUmoopwVIIrEu3gqHyvWk';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+function useBranchConfig() {
+  const [branch, setBranch] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    const h = window.location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1') { setLoaded(true); return; }
+    sb.from('branches').select('*, branch_configs(*)')
+      .eq('hostname', h).eq('active', true).maybeSingle()
+      .then(({ data }) => { setBranch(data); setLoaded(true); });
+  }, []);
+  return { branch, loaded };
+}
+
+function CommitModal({ record, branch, onSuccess, onCancel }) {
+  const [empId, setEmpId] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (empId.length !== 13) { setError('เลขบัตรต้องมี 13 หลัก'); return; }
+    if (!branch) { setError('สาขายังไม่ได้ตั้งค่าในระบบ กรุณาติดต่อผู้ดูแล'); return; }
+    setSaving(true); setError('');
+
+    const { data: emp } = await sb.from('employees').select('id_card,name')
+      .eq('id_card', empId).eq('branch_id', branch.id).eq('active', true).maybeSingle();
+
+    if (!emp) { setError('ไม่พบรหัสพนักงานในสาขานี้ กรุณาตรวจสอบ'); setSaving(false); return; }
+
+    const { error: err } = await sb.from('assessments').insert({
+      ref_code: record.code, branch_id: branch.id, employee_id_card: empId,
+      gold_type: record.type, mode: record.mode, weight: record.weight,
+      unit: record.unit, weight_baht: record.weightBaht,
+      price_per_baht: record.pricePerBaht, api_price_sell: record.apiSell ?? null,
+      labor_fee: record.laborFee ?? 0, discount: record.discount ?? 0, total: record.total,
+    });
+
+    if (err) { setError('บันทึกไม่สำเร็จ: ' + err.message); setSaving(false); return; }
+    onSuccess(emp.name);
+  };
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(6px)',zIndex:200,display:'grid',placeItems:'center',padding:20,animation:'fade 0.2s'}}>
+      <div style={{background:'var(--bg-2)',border:'1px solid var(--border-bright)',padding:40,maxWidth:420,width:'100%',boxShadow:'0 40px 80px rgba(0,0,0,0.6)'}}>
+        <div style={{fontFamily:'var(--serif-en)',fontStyle:'italic',color:'var(--gold)',fontSize:11,letterSpacing:'0.2em',textTransform:'uppercase',marginBottom:6}}>Confirm Assessment</div>
+        <div style={{fontSize:18,fontWeight:700,marginBottom:4}}>ยืนยันการออกใบประเมิน</div>
+        <div style={{fontSize:12,color:'var(--text-mute)',marginBottom:28,fontFamily:'var(--mono)',letterSpacing:'0.04em'}}>
+          {record.code} · {branch?.name ?? 'ไม่ระบุสาขา'}
+        </div>
+
+        <label style={{display:'block',fontSize:11,color:'var(--text-mute)',letterSpacing:'0.1em',textTransform:'uppercase',fontFamily:'var(--serif-en)',fontStyle:'italic',marginBottom:8}}>
+          <span style={{fontFamily:'var(--serif-th)',fontStyle:'normal',color:'var(--text-dim)',textTransform:'none',marginRight:8}}>เลขบัตรประชาชนพนักงาน</span>Employee ID
+        </label>
+        <div style={{border:'1px solid var(--border-bright)',background:'var(--bg)',marginBottom:6}}>
+          <input type="text" inputMode="numeric" maxLength={13} value={empId}
+            onChange={e => setEmpId(e.target.value.replace(/\D/g,''))}
+            onKeyDown={e => e.key === 'Enter' && !saving && handleSave()}
+            placeholder="0000000000000" autoFocus
+            style={{background:'transparent',border:'none',color:'var(--gold-bright)',fontFamily:'var(--mono)',fontSize:22,padding:'14px 18px',outline:'none',width:'100%',letterSpacing:'0.12em'}}
+          />
+        </div>
+        <div style={{fontSize:11,color:'var(--text-mute)',marginBottom:20,fontFamily:'var(--mono)'}}>{empId.length} / 13</div>
+
+        {error && (
+          <div style={{background:'rgba(224,148,120,0.12)',border:'1px solid rgba(224,148,120,0.4)',padding:'10px 14px',fontSize:12,color:'#e09478',marginBottom:16,letterSpacing:'0.04em'}}>
+            ⚠ {error}
+          </div>
+        )}
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:12}}>
+          <button onClick={handleSave} disabled={saving || empId.length !== 13}
+            className={saving || empId.length !== 13 ? 'btn-ghost' : 'btn-primary'}
+            style={{opacity: saving || empId.length !== 13 ? 0.45 : 1, cursor: saving || empId.length !== 13 ? 'not-allowed' : 'pointer'}}>
+            {saving ? 'กำลังบันทึก...' : 'ยืนยัน & ออกใบ'}
+          </button>
+          <button onClick={onCancel} disabled={saving} className="btn-ghost">ยกเลิก</button>
+        </div>
+
+        <div style={{marginTop:16,fontSize:11,color:'var(--text-mute)',borderTop:'1px solid var(--border)',paddingTop:14,letterSpacing:'0.04em'}}>
+          สาขา: {branch?.name ?? '—'} · รหัสใบประเมิน: {record.code}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Tweaks Panel ── */
+function useTweaks(defaults) {
+  const [values, setValues] = useState(defaults);
+  const setTweak = useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null ? keyOrEdits : { [keyOrEdits]: val };
+    setValues(prev => ({ ...prev, ...edits }));
+  }, []);
+  return [values, setTweak];
+}
+
+const TWEAK_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:9999;width:280px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:rgba(250,249,247,.85);color:#29261b;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border:.5px solid rgba(255,255,255,.6);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);font:11.5px/1.4 ui-sans-serif,system-ui,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 10px 14px;cursor:move;user-select:none;border-bottom:.5px solid rgba(0,0,0,.08)}
+  .twk-hd b{font-size:12px;font-weight:600}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);width:22px;height:22px;border-radius:6px;font-size:14px;line-height:1;cursor:pointer}
+  .twk-x:hover{background:rgba(0,0,0,.06)}
+  .twk-body{padding:8px 14px 14px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0}
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:rgba(41,38,27,.45);padding:8px 0 2px}
+  .twk-row{display:flex;flex-direction:column;gap:4px}
+  .twk-lbl{font-size:11px;font-weight:500;color:rgba(41,38,27,.7)}
+  .twk-field{appearance:none;width:100%;height:28px;padding:0 8px;border:.5px solid rgba(0,0,0,.15);border-radius:7px;background:rgba(255,255,255,.7);font:inherit;outline:none}
+  .twk-num-wrap{display:flex;align-items:center;border:.5px solid rgba(0,0,0,.15);border-radius:7px;background:rgba(255,255,255,.7);overflow:hidden}
+  .twk-num-wrap input{flex:1;border:0;background:transparent;font:inherit;padding:4px 8px;outline:none;text-align:right}
+  .twk-btn-full{appearance:none;width:100%;height:28px;border:0;border-radius:7px;background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:pointer}
+  .twk-btn-full:hover{background:rgba(0,0,0,.88)}
+`;
+
+const MANAGER_PIN_KEY = 'gc_manager_pin';
+const DEFAULT_PIN = '1234';
+
+function TweaksPanel({ children, open, onClose }) {
+  const dragRef = useRef(null);
+  const offsetRef = useRef({ x: 16, y: 16 });
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [unlocked, setUnlocked] = useState(false);
+
+  // reset lock every time panel closes
+  useEffect(() => { if (!open) { setUnlocked(false); setPinInput(''); setPinError(''); } }, [open]);
+
+  const checkPin = () => {
+    const stored = localStorage.getItem(MANAGER_PIN_KEY) || DEFAULT_PIN;
+    if (pinInput === stored) { setUnlocked(true); setPinError(''); }
+    else { setPinError('รหัสไม่ถูกต้อง'); setPinInput(''); }
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current; if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const sr = window.innerWidth - r.right, sb = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = { x: sr - (ev.clientX - sx), y: sb - (ev.clientY - sy) };
+      panel.style.right = offsetRef.current.x + 'px';
+      panel.style.bottom = offsetRef.current.y + 'px';
+    };
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{TWEAK_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" style={{ right: 16, bottom: 16 }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>ตั้งค่า — ผู้จัดการ</b>
+          <button className="twk-x" onClick={onClose}>✕</button>
+        </div>
+        {!unlocked ? (
+          <div className="twk-body" style={{gap:12}}>
+            <div style={{fontSize:12,color:'rgba(41,38,27,.6)',textAlign:'center',paddingTop:4}}>กรุณาใส่รหัสผู้จัดการ</div>
+            <input
+              className="twk-field"
+              type="password"
+              inputMode="numeric"
+              maxLength={8}
+              placeholder="รหัส PIN"
+              value={pinInput}
+              onChange={e => setPinInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && checkPin()}
+              autoFocus
+              style={{textAlign:'center',fontSize:18,letterSpacing:'0.3em',height:38}}
+            />
+            {pinError && <div style={{color:'#c0392b',fontSize:11,textAlign:'center'}}>{pinError}</div>}
+            <button className="twk-btn-full" onClick={checkPin}>ยืนยัน</button>
+          </div>
+        ) : (
+          <div className="twk-body">{children}</div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ── Formatting ── */
+const fmt = (n, d = 2) => Number(n || 0).toLocaleString('th-TH', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtInt = (n) => Number(n || 0).toLocaleString('th-TH');
+const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const formatThaiDate = (d, opts = {}) => {
+  const date = d instanceof Date ? d : new Date(d);
+  const day = date.getDate();
+  const m = THAI_MONTHS_SHORT[date.getMonth()];
+  const y = date.getFullYear() + 543;
+  const yStr = opts.shortYear ? String(y).slice(-2) : y;
+  if (opts.withTime) {
+    const hh = String(date.getHours()).padStart(2,'0');
+    const mm = String(date.getMinutes()).padStart(2,'0');
+    return `${day} ${m} ${yStr}  ${hh}:${mm} น.`;
+  }
+  return `${day} ${m} ${yStr}`;
+};
+
+const GRAMS_PER_BAHT = 15.16;
+const toBaht = (value, unit) => {
+  const v = Number(value) || 0;
+  if (unit === 'baht') return v;
+  if (unit === 'salueng') return v / 4;
+  if (unit === 'gram') return v / GRAMS_PER_BAHT;
+  return v;
+};
+
+/* ── Chart series ── */
+function generateSeries(endValue, days = 365) {
+  const out = []; let seed = 1234;
+  const rand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today); date.setDate(today.getDate() - i);
+    const trend = ((days - i) / days) * (endValue - endValue * 0.85);
+    const noise = (rand() - 0.5) * 250;
+    const swing = Math.sin(i / 18) * 180;
+    const v = Math.round(endValue * 0.85 + trend + noise + swing);
+    out.push({ date, value: v });
+  }
+  out[out.length - 1].value = endValue;
+  return out;
+}
+
+function makeCode(counter) {
+  const d = new Date();
+  const yy = String((d.getFullYear() + 543) % 100).padStart(2,'0');
+  const mm = String(d.getMonth() + 1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `GC-${yy}${mm}${dd}-${String(counter).padStart(4,'0')}`;
+}
+
+/* ── Header ── */
+function SiteHeader({ shopName, shopEn, onTweaks }) {
+  return (
+    <header className="site-header">
+      <div className="inner">
+        <div className="brand">
+          <div className="brand-mark"><span className="glyph">R</span></div>
+          <div className="brand-text">
+            <div className="name-th">{shopName}</div>
+            <div className="name-en">{shopEn}</div>
+          </div>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:20 }}>
+          <div className="header-meta">
+            <div className="label">วัน เดือน ปี</div>
+            <div className="value">{formatThaiDate(new Date(), { withTime: true })}</div>
+          </div>
+          <button onClick={onTweaks} style={{
+            background:'transparent', border:'1px solid var(--border-bright)',
+            color:'var(--gold)', padding:'8px 14px', fontSize:12, letterSpacing:'0.08em',
+            fontFamily:'var(--serif-th)', cursor:'pointer'
+          }}>ปรับค่า</button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ── Prices ── */
+function PricesSection({ prices, lastChange, status, strTime, onRefresh }) {
+  const p = prices.bar;
+  const delta = lastChange.bar || 0;
+  const dir = delta >= 0 ? 'up' : 'down';
+
+  const statusBadge = {
+    loading: { color: '#a89373', dot: '◌', label: 'กำลังโหลด...' },
+    ok:      { color: '#8ed1a6', dot: '●', label: strTime || 'ข้อมูลสด' },
+    error:   { color: '#e09478', dot: '●', label: 'API ขัดข้อง — ใช้ค่าสำรอง' },
+  }[status] || { color: '#a89373', dot: '◌', label: '' };
+
+  return (
+    <section>
+      <div className="section-head">
+        <div className="title"><span className="index">No. I.</span><h2>ราคาทองคำแท่งวันนี้</h2></div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span style={{fontSize:11,color:statusBadge.color,fontFamily:'var(--mono)',letterSpacing:'0.04em',display:'flex',alignItems:'center',gap:6}}>
+            <span style={{fontSize:status==='ok'?8:11,animation:status==='ok'?'pulse 2s infinite':undefined}}>{statusBadge.dot}</span>
+            {statusBadge.label}
+          </span>
+          {status !== 'loading' && (
+            <button onClick={onRefresh} title="รีเฟรชราคา" style={{
+              background:'transparent',border:'1px solid var(--border-bright)',color:'var(--gold-soft)',
+              padding:'3px 10px',fontSize:11,fontFamily:'var(--mono)',letterSpacing:'0.06em',cursor:'pointer'
+            }}>↻</button>
+          )}
+          <span className="meta">PRICE / BAHT · THB</span>
+        </div>
+      </div>
+      <div className="prices">
+        <article className="price-card" style={{opacity: status==='loading' ? 0.6 : 1, transition:'opacity 0.4s'}}>
+          <div className="type-label">GOLD BAR · ทองคำแท่ง · ห้วยเซียงหัว</div>
+          <h3 className="type-th">ทองคำแท่ง <span className="purity">96.5%</span></h3>
+          <div className={`delta ${dir}`}>
+            <span>{delta >= 0 ? '▲' : '▼'}</span> {delta >= 0 ? '+' : ''}{fmt(delta, 0)}
+          </div>
+          <div className="price-row">
+            <div className="col buy">
+              <div className="label">รับซื้อ</div>
+              <div className="value">{fmt(p.buy, 0)}</div>
+              <div className="unit">บาท / ทองหนัก 1 บาท</div>
+            </div>
+            <div className="col sell">
+              <div className="label">ขายออก</div>
+              <div className="value">{fmt(p.sell, 0)}</div>
+              <div className="unit">บาท / ทองหนัก 1 บาท</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+/* ── Calculator ── */
+function Calculator({ prices, onCommit, apiStatus, apiSell }) {
+  const [mode, setMode] = useState('sell');
+  const [weight, setWeight] = useState('1');
+  const [unit, setUnit] = useState('baht');
+  const [discount, setDiscount] = useState('0');
+  const weightBaht = toBaht(weight, unit);
+  const calc = useMemo(() => {
+    const p = prices.bar;
+    const pricePerBaht = mode === 'sell' ? p.sell : Math.round(p.sell * 0.95);
+    const basePrice = pricePerBaht * weightBaht;
+    const total = basePrice - Number(discount || 0);
+    const descAction = mode === 'sell' ? 'ขายทองให้ลูกค้า' : 'รับซื้อทองจากลูกค้า';
+    return { pricePerBaht, basePrice, total, descAction };
+  }, [mode, weight, unit, discount, prices, weightBaht]);
+  const apiOffline = apiStatus !== 'ok';
+  const canCommit = weightBaht > 0 && calc.total > 0 && !isNaN(calc.total) && !apiOffline;
+  const commit = () => {
+    if (!canCommit) return;
+    onCommit({ mode, type:'bar', weight:Number(weight), unit, weightBaht,
+      pricePerBaht: calc.pricePerBaht, labor:0, laborFee:0,
+      basePrice: calc.basePrice, discount: Number(discount||0),
+      oldType:null, oldWeight:0, oldUnit:null, oldWeightBaht:0, oldPricePerBaht:0, oldBuy:0,
+      total: calc.total, descAction: calc.descAction,
+      apiSell: apiSell });
+  };
+  return (
+    <section>
+      <div className="section-head">
+        <div className="title"><span className="index">No. II.</span><h2>คำนวณราคา</h2></div>
+        <span className="meta">CALCULATOR · GOLD BAR</span>
+      </div>
+      <div className="calc-layout">
+        <div className="calc-form">
+          <div className="field-group">
+            <div className="field">
+              <label><span className="th">ประเภทรายการ</span> Transaction</label>
+              <div className="seg">
+                <button className={mode==='sell'?'active':''} onClick={() => setMode('sell')}>ขายให้ลูกค้า</button>
+                <button className={mode==='buy'?'active':''} onClick={() => setMode('buy')}>รับซื้อจากลูกค้า</button>
+              </div>
+            </div>
+            <div className="field">
+              <label><span className="th">น้ำหนักทองคำแท่ง</span> Weight</label>
+              <div className="weight-input">
+                <input type="text" inputMode="decimal" value={weight}
+                  onChange={e => setWeight(e.target.value.replace(/[^0-9.]/g,''))} placeholder="0.00" />
+                <div className="unit-pick">
+                  <button className={unit==='baht'?'active':''} onClick={() => setUnit('baht')}>บาท</button>
+                  <button className={unit==='salueng'?'active':''} onClick={() => setUnit('salueng')}>สลึง</button>
+                  <button className={unit==='gram'?'active':''} onClick={() => setUnit('gram')}>กรัม</button>
+                </div>
+              </div>
+              <div style={{fontSize:11,color:'var(--text-mute)',marginTop:6,fontFamily:'var(--mono)'}}>
+                = {fmt(weightBaht,2)} บาท · {fmt(weightBaht*GRAMS_PER_BAHT,2)} ก.
+              </div>
+            </div>
+            <div className="extra-grid">
+              <div className="field">
+                <label><span className="th">ส่วนลด</span> Discount</label>
+                <div className="simple-input">
+                  <input type="text" inputMode="numeric" value={discount}
+                    onChange={e => setDiscount(e.target.value.replace(/[^0-9]/g,''))} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="calc-result">
+          <div className="result-eyebrow">{calc.descAction}</div>
+          <div className="result-title">ยอดรวม{mode==='buy'?'รับซื้อ':'ที่ลูกค้าต้องชำระ'}</div>
+          <div className={`result-amount ${calc.total<=0?'zero':''}`}>
+            <span className="baht-sign">฿</span>{fmt(Math.max(calc.total,0),2)}
+          </div>
+          <div className="result-sub">น้ำหนักทองคำ {fmt(weightBaht,2)} บาท ({fmt(weightBaht*GRAMS_PER_BAHT,2)} กรัม)</div>
+          <div className="result-breakdown">
+            <div className="row">
+              <span>ราคาเนื้อทอง ({fmt(weightBaht,2)} × {fmt(calc.pricePerBaht,0)})</span>
+              <span className="v">{fmt(calc.basePrice,2)}</span>
+            </div>
+            {Number(discount)>0 && (
+              <div className="row"><span>ส่วนลด</span><span className="v" style={{color:'var(--down)'}}>− {fmt(Number(discount),2)}</span></div>
+            )}
+            <div className="row total"><span>รวมสุทธิ</span><span className="v">฿ {fmt(calc.total,2)}</span></div>
+          </div>
+          {apiOffline && (
+            <div style={{background:'rgba(224,148,120,0.15)',border:'1px solid rgba(224,148,120,0.4)',padding:'10px 14px',fontSize:12,color:'#e09478',letterSpacing:'0.04em',marginTop:24}}>
+              ⚠ ไม่สามารถบันทึกได้ — ราคาไม่ได้มาจากระบบ API<br/>
+              <span style={{fontSize:11,opacity:0.8}}>กรุณารอจนกว่าราคาจะแสดง "ข้อมูลสด" แล้วลองใหม่</span>
+            </div>
+          )}
+          <div className="action-row">
+            <button className="btn-primary" disabled={!canCommit} onClick={commit}>บันทึก &amp; ออกใบประเมิน</button>
+            <button className="btn-ghost" onClick={() => { setWeight(''); setDiscount('0'); }}>ล้าง</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── Chart ── */
+function PriceChart({ data, range, setRange }) {
+  const [hover, setHover] = useState(null);
+  const W = 1180, H = 220, PL = 50, PR = 10, PT = 16, PB = 26;
+  const slice = useMemo(() => {
+    const n = Math.min({ '7':7,'30':30,'90':90,'365':365 }[range]||30, data.length);
+    return data.slice(-n);
+  }, [data, range]);
+  const { min, max, points } = useMemo(() => {
+    const vals = slice.map(d => d.value);
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    const pad = (mx-mn)*0.2||100;
+    const minV = mn-pad, maxV = mx+pad;
+    const pts = slice.map((d,i) => ({
+      x: PL + (i/Math.max(slice.length-1,1))*(W-PL-PR),
+      y: PT + (1-(d.value-minV)/(maxV-minV))*(H-PT-PB),
+      ...d
+    }));
+    return { min:minV, max:maxV, points:pts };
+  }, [slice]);
+  const lineD = points.map((p,i) => `${i?'L':'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const area = lineD + ` L${points[points.length-1].x},${H-PB} L${points[0].x},${H-PB} Z`;
+  const first = slice[0]?.value??0, last = slice[slice.length-1]?.value??0;
+  const change = last-first, changePct = first?(change/first)*100:0;
+  const highVal = Math.max(...slice.map(d=>d.value)), lowVal = Math.min(...slice.map(d=>d.value));
+  const ticks = [0,0.25,0.5,0.75,1].map(t => ({ y: PT+t*(H-PT-PB), v: max-t*(max-min) }));
+  const onMove = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX-r.left)/r.width)*W;
+    const ratio = Math.max(0,Math.min(1,(x-PL)/(W-PL-PR)));
+    setHover(points[Math.round(ratio*(slice.length-1))]);
+  };
+  return (
+    <section>
+      <div className="section-head">
+        <div className="title"><span className="index">No. III.</span><h2>ราคาย้อนหลัง — ทองคำแท่ง ขายออก</h2></div>
+        <span className="meta">HISTORICAL · THB / BAHT</span>
+      </div>
+      <div className="chart-card">
+        <div className="chart-header">
+          <div className="chart-title">ความเคลื่อนไหวของราคาในช่วงที่เลือก</div>
+          <div className="chart-controls">
+            {[['7','7 วัน'],['30','30 วัน'],['90','3 เดือน'],['365','1 ปี']].map(([k,l]) => (
+              <button key={k} className={range===k?'active':''} onClick={() => setRange(k)}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <svg className="chart-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+          <defs>
+            <linearGradient id="ga" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#e6c779" stopOpacity="0.45"/>
+              <stop offset="100%" stopColor="#e6c779" stopOpacity="0"/>
+            </linearGradient>
+            <linearGradient id="gl" x1="0" x2="1">
+              <stop offset="0%" stopColor="#c9a24a"/>
+              <stop offset="50%" stopColor="#fae4b3"/>
+              <stop offset="100%" stopColor="#c9a24a"/>
+            </linearGradient>
+          </defs>
+          {ticks.map((t,i) => (
+            <g key={i}>
+              <line x1={PL} x2={W-PR} y1={t.y} y2={t.y} stroke="#3d3120" strokeWidth="1" strokeDasharray={i===0||i===4?'0':'2 4'}/>
+              <text x={PL-8} y={t.y+4} fill="#9c8b6a" fontSize="10" textAnchor="end" fontFamily="monospace">{fmt(t.v,0)}</text>
+            </g>
+          ))}
+          <path d={area} fill="url(#ga)"/>
+          <path d={lineD} stroke="url(#gl)" strokeWidth="1.75" fill="none"/>
+          {hover && (
+            <g>
+              <line x1={hover.x} x2={hover.x} y1={PT} y2={H-PB} stroke="#e6c779" strokeOpacity="0.5" strokeDasharray="2 3"/>
+              <circle cx={hover.x} cy={hover.y} r="4" fill="#fae4b3" stroke="#1a1208" strokeWidth="1.5"/>
+              <g transform={`translate(${Math.min(hover.x+10,W-150)},${Math.max(hover.y-30,PT)})`}>
+                <rect width="140" height="40" fill="#15110b" stroke="#50412a"/>
+                <text x="10" y="16" fill="#d8c89e" fontSize="11">{formatThaiDate(hover.date,{shortYear:true})}</text>
+                <text x="10" y="32" fill="#f4dba0" fontSize="13" fontFamily="monospace" fontWeight="500">{fmtInt(hover.value)} บาท</text>
+              </g>
+            </g>
+          )}
+          <text x={PL} y={H-8} fill="#9c8b6a" fontSize="10">{formatThaiDate(slice[0]?.date)}</text>
+          <text x={W-PR} y={H-8} fill="#9c8b6a" fontSize="10" textAnchor="end">{formatThaiDate(slice[slice.length-1]?.date)}</text>
+        </svg>
+        <div className="chart-stats">
+          <span>เปลี่ยนแปลง <b style={{color:change>=0?'var(--up)':'var(--down)'}}>{change>=0?'+':''}{fmt(change,0)} ({changePct>=0?'+':''}{fmt(changePct,2)}%)</b></span>
+          <span>สูงสุด <b>{fmt(highVal,0)}</b></span>
+          <span>ต่ำสุด <b>{fmt(lowVal,0)}</b></span>
+          <span>ปัจจุบัน <b style={{color:'var(--gold-bright)'}}>{fmt(last,0)}</b></span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── History ── */
+function exportCSV(records) {
+  const headers = ['รหัสรายการ','วัน เวลา','ประเภท','ชนิดทอง','น้ำหนัก','หน่วย','ราคาที่ใช้/บาท','ราคา API ณ เวลานั้น','ส่วนต่าง','ส่วนลด','ยอดรวม','สถานะราคา'];
+  const rows = records.map(r => {
+    const apiSell = r.apiSell || null;
+    const expected = apiSell ? (r.mode === 'buy' ? Math.round(apiSell * 0.95) : apiSell) : null;
+    const diff = expected !== null ? r.pricePerBaht - expected : '';
+    const status = expected === null ? 'ไม่มีข้อมูล API' : Math.abs(diff) <= 50 ? 'ปกติ' : '⚠ ผิดปกติ';
+    return [
+      r.code,
+      new Date(r.timestamp).toLocaleString('th-TH'),
+      r.descAction,
+      r.type === 'bar' ? 'ทองแท่ง' : 'ทองรูปพรรณ',
+      r.weight,
+      r.unit === 'baht' ? 'บาท' : r.unit === 'salueng' ? 'สลึง' : 'กรัม',
+      r.pricePerBaht,
+      apiSell ?? '-',
+      diff !== '' ? diff : '-',
+      r.discount || 0,
+      r.total,
+      status,
+    ];
+  });
+  const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `gold-ledger-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function PriceStatusBadge({ record }) {
+  if (!record.apiSell) return <span style={{color:'var(--text-mute)',fontSize:11}}>—</span>;
+  const expected = record.mode === 'buy' ? Math.round(record.apiSell * 0.95) : record.apiSell;
+  const diff = record.pricePerBaht - expected;
+  const ok = Math.abs(diff) <= 50;
+  return (
+    <span style={{
+      fontSize:11, padding:'2px 8px', border:'1px solid currentColor',
+      color: ok ? 'var(--up)' : '#e09478',
+      letterSpacing:'0.04em',
+    }}>
+      {ok ? '✓ ปกติ' : `⚠ ต่าง ${diff > 0 ? '+' : ''}${diff}`}
+    </span>
+  );
+}
+
+function HistorySection({ records, onLookup, query, setQuery }) {
+  const [filter, setFilter] = useState('all');
+  const filtered = useMemo(() => {
+    let r = records;
+    if (filter!=='all') r = r.filter(x => x.mode===filter);
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      r = r.filter(x => x.code.toLowerCase().includes(q) || formatThaiDate(x.timestamp).toLowerCase().includes(q));
+    }
+    return r.slice().reverse();
+  }, [records, query, filter]);
+
+  const flagged = useMemo(() => records.filter(r => {
+    if (!r.apiSell) return false;
+    const expected = r.mode === 'buy' ? Math.round(r.apiSell * 0.95) : r.apiSell;
+    return Math.abs(r.pricePerBaht - expected) > 50;
+  }).length, [records]);
+
+  return (
+    <section className="history-section">
+      <div className="section-head">
+        <div className="title">
+          <span className="index">No. IV.</span>
+          <h2>ประวัติการคำนวณ</h2>
+          {flagged > 0 && (
+            <span style={{fontSize:12,color:'#e09478',border:'1px solid #e09478',padding:'2px 10px',marginLeft:8}}>
+              ⚠ {flagged} รายการผิดปกติ
+            </span>
+          )}
+        </div>
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <button onClick={() => exportCSV(records)} style={{
+            background:'transparent',border:'1px solid var(--gold-soft)',color:'var(--gold)',
+            padding:'6px 14px',fontSize:12,letterSpacing:'0.08em',cursor:'pointer',fontFamily:'var(--serif-th)'
+          }}>↓ Export CSV</button>
+          <span className="meta">LEDGER · {fmtInt(records.length)} รายการ</span>
+        </div>
+      </div>
+      <div className="history-search">
+        <div className="search-input">
+          <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="ค้นหารหัสรายการ เช่น GC-690513-0001"/>
+        </div>
+        <div className="seg-4">
+          {[['all','ทั้งหมด'],['sell','ขาย'],['buy','รับซื้อ'],['trade','เปลี่ยน']].map(([k,l]) => (
+            <button key={k} className={filter===k?'active':''} onClick={() => setFilter(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
+      {filtered.length===0 ? (
+        <div className="history-empty">
+          <div className="symbol">∽</div>
+          <div>{records.length===0?'ยังไม่มีรายการคำนวณ':'ไม่พบรายการที่ค้นหา'}</div>
+        </div>
+      ) : (
+        <table className="history-table">
+          <thead><tr>
+            <th>Code<span className="th">รหัสรายการ</span></th>
+            <th>Date<span className="th">วัน เวลา</span></th>
+            <th>Type<span className="th">รายการ</span></th>
+            <th>Weight<span className="th">น้ำหนัก</span></th>
+            <th>Price<span className="th">ราคาที่ใช้/บาท</span></th>
+            <th>API<span className="th">ราคา API</span></th>
+            <th>Check<span className="th">ตรวจสอบ</span></th>
+            <th style={{textAlign:'right'}}>Total<span className="th">ยอดรวม</span></th>
+            <th></th>
+          </tr></thead>
+          <tbody>
+            {filtered.map(r => (
+              <tr key={r.code}>
+                <td className="code">{r.code}</td>
+                <td>{formatThaiDate(r.timestamp,{withTime:true})}</td>
+                <td>
+                  <span className={`badge ${r.mode}`}>{r.mode==='sell'?'ขาย':r.mode==='buy'?'รับซื้อ':'เปลี่ยน'}</span>
+                </td>
+                <td style={{fontFamily:'var(--mono)'}}>{fmt(r.weight,2)} {r.unit==='baht'?'บ.':r.unit==='salueng'?'สลึง':'ก.'}</td>
+                <td style={{fontFamily:'var(--mono)'}}>{fmt(r.pricePerBaht,0)}</td>
+                <td style={{fontFamily:'var(--mono)',color:'var(--text-mute)'}}>{r.apiSell ? fmt(r.apiSell,0) : '—'}</td>
+                <td><PriceStatusBadge record={r} /></td>
+                <td className="amount">{fmt(r.total,2)}</td>
+                <td style={{textAlign:'right'}}><button className="icon-btn" onClick={() => onLookup(r)}>ดู / พิมพ์</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}
+
+/* ── Receipt ── */
+function Receipt({ record, shopName, onClose }) {
+  if (!record) return null;
+  const ul = record.unit==='baht'?'บาท':record.unit==='salueng'?'สลึง':'กรัม';
+  return (
+    <div className="receipt-backdrop" onClick={onClose}>
+      <div className="receipt" onClick={e => e.stopPropagation()}>
+        <div className="receipt-header">
+          <div className="receipt-mark">R</div>
+          <div className="receipt-shop">{shopName}</div>
+          <div className="receipt-sub">Ratanakarn Gold · Est. 2510</div>
+          <div className="receipt-doc">ใบประเมินราคาทองคำ</div>
+          <div className="receipt-code">{record.code}</div>
+        </div>
+        <div className="receipt-body">
+          <div className="row"><span className="k">วัน เวลา</span><span className="v">{formatThaiDate(record.timestamp,{withTime:true})}</span></div>
+          <div className="row"><span className="k">ประเภทรายการ</span><span className="v">{record.descAction}</span></div>
+          <div className="row"><span className="k">ชนิดทอง</span><span className="v">{record.type==='bar'?'ทองคำแท่ง 96.5%':'ทองรูปพรรณ 96.5%'}</span></div>
+          <div className="row"><span className="k">น้ำหนัก</span><span className="v">{fmt(record.weight,2)} {ul} ({fmt(record.weightBaht,2)} บาท)</span></div>
+          <div className="row"><span className="k">ราคา/บาท</span><span className="v">{fmt(record.pricePerBaht,2)}</span></div>
+          <div className="row"><span className="k">ราคาเนื้อทอง</span><span className="v">{fmt(record.basePrice,2)}</span></div>
+          {record.discount>0 && <div className="row"><span className="k">ส่วนลด</span><span className="v">− {fmt(record.discount,2)}</span></div>}
+        </div>
+        <div className="receipt-total"><span className="k">รวมสุทธิ</span><span className="v">฿ {fmt(record.total,2)}</span></div>
+        <div className="receipt-qr">
+          <div className="qr-grid" aria-hidden></div>
+          <div className="text">ตรวจสอบความถูกต้องของใบประเมินได้ที่<b>{record.code}</b>ราคาอ้างอิงประกาศจากสมาคมค้าทองคำ</div>
+        </div>
+        <div className="receipt-foot">
+          ราคาอ้างอิงจากสมาคมค้าทองคำแห่งประเทศไทย<br/>
+          ใบประเมินมีอายุ 30 นาที นับจากเวลาที่ออก<br/>ขอบพระคุณที่ใช้บริการ
+        </div>
+        <div className="receipt-actions">
+          <button onClick={() => window.print()}>พิมพ์ใบประเมิน</button>
+          <button className="close" onClick={onClose}>ปิด</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Seed ── */
+function seedHistory() {
+  const now = new Date();
+  const ago = m => { const d=new Date(now); d.setMinutes(d.getMinutes()-m); return d.toISOString(); };
+  return [
+    { code:'GC-690513-0001', timestamp:ago(220), mode:'sell', type:'jewelry', weight:1, unit:'baht', weightBaht:1, pricePerBaht:48850, basePrice:48850, labor:500, laborFee:500, discount:0, oldBuy:0, total:49350, descAction:'ขายทองให้ลูกค้า' },
+    { code:'GC-690513-0002', timestamp:ago(180), mode:'buy',  type:'jewelry', weight:2, unit:'baht', weightBaht:2, pricePerBaht:47402, basePrice:94804, labor:0,   laborFee:0,   discount:0, oldBuy:0, total:94804, descAction:'รับซื้อทองจากลูกค้า' },
+    { code:'GC-690513-0003', timestamp:ago(95),  mode:'sell', type:'bar',     weight:5, unit:'baht', weightBaht:5, pricePerBaht:48350, basePrice:241750,labor:0,   laborFee:0,   discount:250,oldBuy:0, total:241500,descAction:'ขายทองให้ลูกค้า' },
+    { code:'GC-690513-0004', timestamp:ago(42),  mode:'trade',type:'jewelry', weight:2, unit:'baht', weightBaht:2, pricePerBaht:48850, basePrice:97700, labor:500, laborFee:1000,discount:0, oldBuy:47402,total:51298,descAction:'เปลี่ยน / ต่อทอง' },
+    { code:'GC-690513-0005', timestamp:ago(12),  mode:'sell', type:'jewelry', weight:2, unit:'salueng',weightBaht:0.5,pricePerBaht:48850,basePrice:24425,labor:500,laborFee:250, discount:0, oldBuy:0, total:24675,descAction:'ขายทองให้ลูกค้า' },
+  ];
+}
+
+/* ── Live price hook (Hua Seng Heng API) ── */
+const HSH_API = 'https://apicheckpricev3.huasengheng.com/api/values/getprice/';
+const REFRESH_MS = 5 * 60 * 1000; // 5 minutes
+
+function useGoldPrice(fallbackBuy, fallbackSell) {
+  const [live, setLive] = useState(null);   // { buy, sell, buyChange, sellChange, strTime }
+  const [status, setStatus] = useState('loading'); // loading | ok | error
+
+  const fetchPrice = useCallback(async () => {
+    try {
+      const res = await fetch(HSH_API, { headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const d = json.find(x => x.GoldType === 'REF' && x.GoldCode === '96.50');
+      if (!d) throw new Error('ไม่พบข้อมูล 96.50%');
+      setLive({
+        buy:        Number(String(d.Buy).replace(/,/g, '')),
+        sell:       Number(String(d.Sell).replace(/,/g, '')),
+        buyChange:  Number(String(d.BuyChange  || 0).replace(/,/g, '')),
+        sellChange: Number(String(d.SellChange || 0).replace(/,/g, '')),
+        strTime:    d.StrTimeUpdate || '',
+      });
+      setStatus('ok');
+    } catch (err) {
+      console.warn('HSH API error:', err.message);
+      setStatus('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPrice();
+    const id = setInterval(fetchPrice, REFRESH_MS);
+    return () => clearInterval(id);
+  }, [fetchPrice]);
+
+  const buy  = live ? live.buy  : fallbackBuy;
+  const sell = live ? live.sell : fallbackSell;
+  const delta = live ? live.sellChange : 0;
+  return { buy, sell, delta, strTime: live?.strTime ?? '', status, refresh: fetchPrice };
+}
+
+/* ── App ── */
+const STORAGE_HISTORY = 'gc_history_v1';
+const STORAGE_COUNTER = 'gc_counter_v1';
+const TWEAK_DEFAULTS = {
+  shopName: 'ห้างทอง รัตนกาญจน์',
+  shopEn: 'Ratanakarn Gold · Est. 2510',
+  barBuy: 48250, barSell: 48350,
+};
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const { buy, sell, delta, strTime, status, refresh } = useGoldPrice(t.barBuy, t.barSell);
+
+  const [history, setHistory] = useState(() => {
+    try { const r = localStorage.getItem(STORAGE_HISTORY); return r ? JSON.parse(r) : seedHistory(); } catch { return seedHistory(); }
+  });
+  const [counter, setCounter] = useState(() => {
+    try { const r = localStorage.getItem(STORAGE_COUNTER); return r ? Number(r) : history.length+1; } catch { return history.length+1; }
+  });
+  const [activeReceipt, setActiveReceipt] = useState(null);
+  const [range, setRange] = useState('30');
+  const [query, setQuery] = useState('');
+  const [tweaksOpen, setTweaksOpen] = useState(false);
+  const { branch } = useBranchConfig();
+  const [pendingRecord, setPendingRecord] = useState(null);
+
+  const prices     = useMemo(() => ({ bar: { buy, sell } }), [buy, sell]);
+  const lastChange = useMemo(() => ({ bar: delta }), [delta]);
+  const chartData  = useMemo(() => generateSeries(sell, 365), [sell]);
+
+  useEffect(() => { try { localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history)); } catch {} }, [history]);
+  useEffect(() => { try { localStorage.setItem(STORAGE_COUNTER, String(counter)); } catch {} }, [counter]);
+
+  const handleCommit = useCallback(payload => {
+    const code = makeCode(counter);
+    const record = { ...payload, code, timestamp: new Date().toISOString() };
+    setPendingRecord(record);
+  }, [counter]);
+
+  const handleConfirmed = useCallback(employeeName => {
+    if (!pendingRecord) return;
+    const rec = { ...pendingRecord, employeeName };
+    setHistory(h => [...h, rec]);
+    setCounter(c => c + 1);
+    setActiveReceipt(rec);
+    setPendingRecord(null);
+  }, [pendingRecord]);
+
+  return (
+    <>
+      <SiteHeader shopName={t.shopName} shopEn={t.shopEn} onTweaks={() => setTweaksOpen(o => !o)} />
+      <main className="page">
+        <PricesSection prices={prices} lastChange={lastChange} status={status} strTime={strTime} onRefresh={refresh} />
+        <Calculator prices={prices} onCommit={handleCommit} apiStatus={status} apiSell={sell} />
+        <PriceChart data={chartData} range={range} setRange={setRange} />
+        <HistorySection records={history} onLookup={r => setActiveReceipt(r)} query={query} setQuery={setQuery} />
+      </main>
+      <footer className="site-foot">
+        <div className="ornament-row">❖ &nbsp;&nbsp; ✦ &nbsp;&nbsp; ❖</div>
+        <div>{t.shopName} · ห้างทองคำมาตรฐาน 96.5%</div>
+        <div style={{marginTop:6}}>ราคาอ้างอิงจากสมาคมค้าทองคำแห่งประเทศไทย · ระบบนี้ใช้สำหรับประเมินราคาเบื้องต้น</div>
+      </footer>
+      {pendingRecord && (
+        <CommitModal
+          record={pendingRecord}
+          branch={branch}
+          onSuccess={handleConfirmed}
+          onCancel={() => setPendingRecord(null)}
+        />
+      )}
+      <Receipt record={activeReceipt} shopName={t.shopName} onClose={() => setActiveReceipt(null)} />
+      <TweaksPanel open={tweaksOpen} onClose={() => setTweaksOpen(false)}>
+        <div className="twk-sect">ข้อมูลร้าน</div>
+        <div className="twk-row"><div className="twk-lbl">ชื่อร้าน</div><input className="twk-field" value={t.shopName} onChange={e => setTweak('shopName',e.target.value)}/></div>
+        <div className="twk-row"><div className="twk-lbl">ชื่อ EN</div><input className="twk-field" value={t.shopEn} onChange={e => setTweak('shopEn',e.target.value)}/></div>
+        <div className="twk-sect">ราคาสำรอง (ใช้เมื่อ API ขัดข้อง)</div>
+        <div className="twk-row"><div className="twk-lbl">ทองแท่ง รับซื้อ</div><div className="twk-num-wrap"><input type="number" value={t.barBuy} step={50} onChange={e => setTweak('barBuy',Number(e.target.value))}/></div></div>
+        <div className="twk-row"><div className="twk-lbl">ทองแท่ง ขายออก</div><div className="twk-num-wrap"><input type="number" value={t.barSell} step={50} onChange={e => setTweak('barSell',Number(e.target.value))}/></div></div>
+        <div className="twk-sect">ความปลอดภัย</div>
+        <div className="twk-row"><div className="twk-lbl">เปลี่ยน PIN ผู้จัดการ</div>
+          <div style={{display:'flex',gap:6}}>
+            <input id="new-pin-input" className="twk-field" type="password" inputMode="numeric" maxLength={8} placeholder="PIN ใหม่" style={{flex:1}}/>
+            <button className="twk-btn-full" style={{width:'auto',padding:'0 10px'}} onClick={() => {
+              const v = document.getElementById('new-pin-input').value.trim();
+              if (v.length < 4) { alert('PIN ต้องมีอย่างน้อย 4 ตัว'); return; }
+              localStorage.setItem(MANAGER_PIN_KEY, v);
+              document.getElementById('new-pin-input').value = '';
+              alert('เปลี่ยน PIN เรียบร้อย');
+            }}>บันทึก</button>
+          </div>
+        </div>
+        <div className="twk-sect">จัดการ</div>
+        <button className="twk-btn-full" onClick={refresh} style={{marginBottom:6,background:'rgba(201,162,74,0.25)',color:'#c9a24a'}}>รีเฟรชราคา</button>
+        <button className="twk-btn-full" onClick={() => { if(confirm('ล้างประวัติการคำนวณทั้งหมด?')) { setHistory([]); setCounter(1); } }}>ล้างประวัติทั้งหมด</button>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GoldMark — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<style>
+:root {
+  --bg: #0d0814; --bg-2: #150f1c;
+  --surface: rgba(28,20,36,0.92); --surface-2: rgba(36,26,44,0.92);
+  --border: rgba(180,140,80,0.22); --border-bright: rgba(220,180,110,0.38);
+  --gold: #e6c779; --gold-bright: #f8e2a8; --gold-soft: #c9a24a;
+  --text: #fbf3df; --text-dim: #e0cea2; --text-mute: #a89373;
+  --up: #8ed1a6; --down: #e09478;
+  --serif-th: 'Noto Serif Thai', serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--serif-th); font-size: 15px; min-height: 100vh; }
+button { font-family: inherit; cursor: pointer; }
+input, select { font-family: inherit; }
+:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+
+.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px;
+  background: radial-gradient(ellipse 60% 50% at 20% 20%, rgba(180,30,60,0.4), transparent 65%),
+              radial-gradient(ellipse 60% 50% at 80% 80%, rgba(40,60,200,0.35), transparent 65%), #0d0814; }
+.login-box { background: var(--surface); border: 1px solid var(--border-bright); padding: 48px 40px; width: 100%; max-width: 380px; box-shadow: 0 40px 80px rgba(0,0,0,0.5); }
+.login-mark { font-size: 28px; font-weight: 700; color: var(--gold-bright); letter-spacing: 0.06em; margin-bottom: 4px; }
+.login-sub { font-size: 11px; color: var(--text-mute); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 36px; }
+
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 11px; color: var(--text-mute); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+.f-input { border: 1px solid var(--border-bright); background: var(--bg-2); }
+.f-input input, .f-input select { background: transparent; border: none; color: var(--text); font-family: var(--mono); font-size: 15px; padding: 12px 14px; outline: none; width: 100%; }
+.f-input select { color: var(--text-dim); }
+
+.btn-primary { background: linear-gradient(180deg,#f4dba0,#c9a24a); color: #1a1208; font-weight: 700; border: 1px solid var(--gold-bright); padding: 13px 22px; font-size: 14px; letter-spacing: 0.08em; cursor: pointer; }
+.btn-primary:disabled { background: var(--surface-2); color: var(--text-mute); border-color: var(--border); cursor: not-allowed; }
+.btn-primary:hover:not(:disabled) { background: linear-gradient(180deg,#fae4b3,#e6c779); }
+.btn-ghost { background: transparent; color: var(--text-mute); border: 1px solid var(--border-bright); padding: 8px 16px; font-size: 13px; cursor: pointer; }
+.btn-ghost:hover { color: var(--text); border-color: var(--gold-soft); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-danger { background: transparent; color: var(--down); border: 1px solid rgba(224,148,120,0.4); padding: 6px 12px; font-size: 12px; cursor: pointer; }
+.btn-danger:hover { border-color: var(--down); background: rgba(224,148,120,0.08); }
+.btn-w100 { width: 100%; }
+
+.admin-wrap { display: grid; grid-template-rows: auto auto 1fr; min-height: 100vh; }
+.admin-header { border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; background: rgba(13,8,20,0.7); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 10; }
+.admin-brand { font-size: 16px; font-weight: 700; color: var(--gold-bright); letter-spacing: 0.06em; }
+.admin-sub { font-size: 11px; color: var(--text-mute); margin-top: 2px; letter-spacing: 0.08em; }
+
+.tab-bar { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-2); padding: 0 32px; overflow-x: auto; }
+.tab { background: transparent; border: none; color: var(--text-mute); padding: 14px 20px; font-size: 13px; letter-spacing: 0.04em; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: all 0.2s; }
+.tab.active { color: var(--gold-bright); border-bottom-color: var(--gold); }
+.tab:hover:not(.active) { color: var(--text); }
+
+.content { padding: 28px 32px; max-width: 1100px; }
+
+.card { background: var(--surface); border: 1px solid var(--border); padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 20px; letter-spacing: 0.04em; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; color: var(--gold); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 14px; border-bottom: 1px solid var(--border-bright); background: var(--surface-2); font-weight: 400; }
+td { padding: 12px 14px; border-top: 1px solid var(--border); color: var(--text-dim); vertical-align: middle; }
+tr:hover td { background: rgba(201,162,74,0.03); }
+.mono { font-family: var(--mono); color: var(--gold-bright); font-size: 12px; letter-spacing: 0.06em; }
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border: 1px solid currentColor; letter-spacing: 0.04em; }
+.badge.on { color: var(--up); }
+.badge.off { color: var(--down); }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+.num-wrap { border: 1px solid var(--border-bright); background: var(--bg-2); }
+.num-wrap input { background: transparent; border: none; color: var(--gold-bright); font-family: var(--mono); font-size: 14px; padding: 10px 12px; outline: none; width: 100%; }
+
+.msg-ok { background: rgba(142,209,166,0.1); border: 1px solid rgba(142,209,166,0.35); padding: 10px 14px; font-size: 12px; color: var(--up); margin-top: 12px; }
+.msg-err { background: rgba(224,148,120,0.1); border: 1px solid rgba(224,148,120,0.35); padding: 10px 14px; font-size: 12px; color: #e09478; margin-top: 12px; }
+
+.spinner { display: grid; place-items: center; padding: 60px; color: var(--text-mute); font-size: 13px; letter-spacing: 0.06em; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+const SUPABASE_URL = 'https://cplpzqijglqrtnfrepsu.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwbHB6cWlqZ2xxcnRuZnJlcHN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDE2NDMsImV4cCI6MjA5NDUxNzY0M30.sbvDH-1SmWqURDKCP0eYEvGUmoopwVIIrEu3gqHyvWk';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const fmtNum = n => Number(n || 0).toLocaleString('th-TH');
+const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const thaiDt = s => {
+  const d = new Date(s);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()+543} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+};
+
+/* ── Login ── */
+function LoginPage({ onLogin }) {
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    if (!email || !pw) return;
+    setLoading(true); setErr('');
+    const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+    if (error) { setErr('อีเมลหรือรหัสผ่านไม่ถูกต้อง'); setLoading(false); }
+    else onLogin();
+  };
+
+  return (
+    <div className="login-wrap">
+      <div className="login-box">
+        <div className="login-mark">GoldMark</div>
+        <div className="login-sub">Admin · ระบบหลังบ้าน</div>
+        <div className="field">
+          <label>อีเมล</label>
+          <div className="f-input"><input type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} placeholder="admin@example.com" autoFocus /></div>
+        </div>
+        <div className="field">
+          <label>รหัสผ่าน</label>
+          <div className="f-input"><input type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} /></div>
+        </div>
+        {err && <div className="msg-err">{err}</div>}
+        <div style={{marginTop:20}}>
+          <button className="btn-primary btn-w100" onClick={submit} disabled={loading||!email||!pw}>
+            {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Tab: สาขา ── */
+function BranchesTab() {
+  const [list, setList] = useState([]);
+  const [name, setName] = useState('');
+  const [hostname, setHostname] = useState('');
+  const [err, setErr] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const load = () => sb.from('branches').select('*').order('created_at').then(({ data }) => data && setList(data));
+  useEffect(() => { load(); }, []);
+
+  const add = async () => {
+    if (!name.trim() || !hostname.trim()) { setErr('กรุณากรอกชื่อสาขาและ Hostname'); return; }
+    const { error } = await sb.from('branches').insert({ name: name.trim(), hostname: hostname.trim().toLowerCase() });
+    if (error) { setErr(error.message); return; }
+    setName(''); setHostname(''); setMsg('เพิ่มสาขาเรียบร้อย'); setErr(''); load();
+  };
+
+  const toggle = async (id, active) => {
+    await sb.from('branches').update({ active: !active }).eq('id', id);
+    load();
+  };
+
+  return (
+    <div>
+      <div className="card">
+        <div className="card-title">เพิ่มสาขาใหม่</div>
+        <div className="form-grid">
+          <div className="field">
+            <label>ชื่อสาขา</label>
+            <div className="f-input"><input value={name} onChange={e=>setName(e.target.value)} placeholder="เช่น สาขาสีลม" /></div>
+          </div>
+          <div className="field">
+            <label>Hostname (URL บน Vercel)</label>
+            <div className="f-input"><input value={hostname} onChange={e=>setHostname(e.target.value)} placeholder="goldmark-branch1.vercel.app" /></div>
+          </div>
+        </div>
+        <button className="btn-primary" onClick={add}>+ เพิ่มสาขา</button>
+        {err && <div className="msg-err">{err}</div>}
+        {msg && <div className="msg-ok">{msg}</div>}
+      </div>
+
+      <div className="card">
+        <div className="card-title">รายชื่อสาขาทั้งหมด ({list.length})</div>
+        {list.length === 0 ? <div style={{color:'var(--text-mute)',fontSize:13,padding:'20px 0'}}>ยังไม่มีสาขา</div> : (
+          <table>
+            <thead><tr>
+              <th>ชื่อสาขา</th><th>Hostname</th><th>สถานะ</th><th>วันที่สร้าง</th><th></th>
+            </tr></thead>
+            <tbody>{list.map(b => (
+              <tr key={b.id}>
+                <td style={{fontWeight:600}}>{b.name}</td>
+                <td className="mono">{b.hostname}</td>
+                <td><span className={`badge ${b.active?'on':'off'}`}>{b.active?'ใช้งาน':'ปิด'}</span></td>
+                <td style={{color:'var(--text-mute)',fontSize:12}}>{thaiDt(b.created_at)}</td>
+                <td><button className="btn-ghost btn-sm" onClick={()=>toggle(b.id,b.active)}>{b.active?'ปิดสาขา':'เปิดสาขา'}</button></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Tab: พนักงาน ── */
+function EmployeesTab({ branches }) {
+  const [list, setList] = useState([]);
+  const [name, setName] = useState('');
+  const [idCard, setIdCard] = useState('');
+  const [branchId, setBranchId] = useState('');
+  const [filterBranch, setFilterBranch] = useState('');
+  const [err, setErr] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const load = () => sb.from('employees').select('*, branches(name)').order('created_at').then(({ data }) => data && setList(data));
+  useEffect(() => { load(); if (branches.length && !branchId) setBranchId(branches[0].id); }, [branches]);
+
+  const add = async () => {
+    if (!name.trim()) { setErr('กรุณากรอกชื่อ'); return; }
+    if (idCard.length !== 13) { setErr('เลขบัตรต้องมี 13 หลัก'); return; }
+    if (!branchId) { setErr('กรุณาเลือกสาขา'); return; }
+    const { error } = await sb.from('employees').insert({ id_card: idCard, name: name.trim(), branch_id: branchId });
+    if (error) { setErr(error.code === '23505' ? 'เลขบัตรนี้มีอยู่ในระบบแล้ว' : error.message); return; }
+    setName(''); setIdCard(''); setMsg('เพิ่มพนักงานเรียบร้อย'); setErr(''); load();
+  };
+
+  const toggle = async (id_card, active) => {
+    await sb.from('employees').update({ active: !active }).eq('id_card', id_card);
+    load();
+  };
+
+  const filtered = filterBranch ? list.filter(e => e.branch_id === filterBranch) : list;
+
+  return (
+    <div>
+      <div className="card">
+        <div className="card-title">เพิ่มพนักงาน</div>
+        <div className="form-grid">
+          <div className="field">
+            <label>ชื่อ-นามสกุล</label>
+            <div className="f-input"><input value={name} onChange={e=>setName(e.target.value)} placeholder="ชื่อพนักงาน" /></div>
+          </div>
+          <div className="field">
+            <label>เลขบัตรประชาชน 13 หลัก</label>
+            <div className="f-input"><input type="text" inputMode="numeric" maxLength={13} value={idCard}
+              onChange={e=>setIdCard(e.target.value.replace(/\D/g,''))}
+              placeholder="0000000000000" style={{fontFamily:'var(--mono)',letterSpacing:'0.1em'}} /></div>
+            <div style={{fontSize:11,color:'var(--text-mute)',marginTop:4,fontFamily:'var(--mono)'}}>{idCard.length}/13</div>
+          </div>
+          <div className="field">
+            <label>สาขา</label>
+            <div className="f-input"><select value={branchId} onChange={e=>setBranchId(e.target.value)}>
+              <option value="">-- เลือกสาขา --</option>
+              {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select></div>
+          </div>
+        </div>
+        <button className="btn-primary" onClick={add}>+ เพิ่มพนักงาน</button>
+        {err && <div className="msg-err">{err}</div>}
+        {msg && <div className="msg-ok">{msg}</div>}
+      </div>
+
+      <div className="card">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:12}}>
+          <div className="card-title" style={{marginBottom:0}}>รายชื่อพนักงาน ({filtered.length})</div>
+          <div className="f-input" style={{minWidth:180}}>
+            <select value={filterBranch} onChange={e=>setFilterBranch(e.target.value)}>
+              <option value="">ทุกสาขา</option>
+              {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </div>
+        </div>
+        {filtered.length === 0 ? <div style={{color:'var(--text-mute)',fontSize:13,padding:'20px 0'}}>ยังไม่มีพนักงาน</div> : (
+          <table>
+            <thead><tr><th>ชื่อ</th><th>เลขบัตร</th><th>สาขา</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody>{filtered.map(e => (
+              <tr key={e.id_card}>
+                <td style={{fontWeight:600}}>{e.name}</td>
+                <td className="mono">{e.id_card}</td>
+                <td>{e.branches?.name ?? '—'}</td>
+                <td><span className={`badge ${e.active?'on':'off'}`}>{e.active?'ใช้งาน':'ระงับ'}</span></td>
+                <td><button className={e.active?'btn-danger btn-sm':'btn-ghost btn-sm'} onClick={()=>toggle(e.id_card,e.active)}>{e.active?'ระงับ':'เปิดใช้'}</button></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Tab: สูตรคำนวณ ── */
+function ConfigsTab({ branches }) {
+  const [selBranch, setSelBranch] = useState('');
+  const [vals, setVals] = useState({
+    bar:     { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0 },
+    jewelry: { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0 },
+  });
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+
+  useEffect(() => { if (branches.length && !selBranch) setSelBranch(branches[0].id); }, [branches]);
+
+  useEffect(() => {
+    if (!selBranch) return;
+    setMsg(''); setErr('');
+    sb.from('branch_configs').select('*').eq('branch_id', selBranch).then(({ data }) => {
+      if (!data) return;
+      const next = {
+        bar:     { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0 },
+        jewelry: { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0 },
+      };
+      data.forEach(c => { if (next[c.gold_type]) Object.assign(next[c.gold_type], c); });
+      setVals(next);
+    });
+  }, [selBranch]);
+
+  const set = (type, key, v) => setVals(prev => ({ ...prev, [type]: { ...prev[type], [key]: Number(v)||0 } }));
+
+  const save = async () => {
+    if (!selBranch) return;
+    setSaving(true); setMsg(''); setErr('');
+    for (const type of ['bar', 'jewelry']) {
+      const { error } = await sb.from('branch_configs').upsert(
+        { branch_id: selBranch, gold_type: type, ...vals[type], updated_at: new Date().toISOString() },
+        { onConflict: 'branch_id,gold_type' }
+      );
+      if (error) { setErr('บันทึกไม่สำเร็จ: ' + error.message); setSaving(false); return; }
+    }
+    setSaving(false); setMsg('บันทึกเรียบร้อย');
+  };
+
+  const NumField = ({ label, type, field }) => (
+    <div className="field">
+      <label>{label}</label>
+      <div className="num-wrap"><input type="number" min={0} step={1} value={vals[type][field]} onChange={e=>set(type,field,e.target.value)} /></div>
+    </div>
+  );
+
+  const typeNames = { bar: 'ทองคำแท่ง', jewelry: 'ทองรูปพรรณ' };
+
+  return (
+    <div>
+      <div className="card">
+        <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:24,flexWrap:'wrap'}}>
+          <div className="card-title" style={{marginBottom:0}}>สูตรคำนวณ — เลือกสาขา</div>
+          <div className="f-input" style={{minWidth:220}}>
+            <select value={selBranch} onChange={e=>setSelBranch(e.target.value)}>
+              <option value="">-- เลือกสาขา --</option>
+              {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {['bar','jewelry'].map(type => (
+          <div key={type} style={{marginBottom:28}}>
+            <div style={{fontSize:13,fontWeight:700,color:'var(--gold)',marginBottom:14,paddingBottom:10,borderBottom:'1px solid var(--border)'}}>
+              {typeNames[type]}
+            </div>
+            <div className="form-grid">
+              <NumField label="ค่ากำเหน็จต่ำสุด (บาท)" type={type} field="labor_fee_min" />
+              <NumField label="ค่ากำเหน็จสูงสุด (บาท)" type={type} field="labor_fee_max" />
+              <NumField label="ส่วนลดต่ำสุด (%)" type={type} field="discount_pct_min" />
+              <NumField label="ส่วนลดสูงสุด (%)" type={type} field="discount_pct_max" />
+              <NumField label="ส่วนลดสูงสุด (บาท)" type={type} field="discount_max_baht" />
+            </div>
+          </div>
+        ))}
+
+        <button className="btn-primary" onClick={save} disabled={!selBranch||saving}>
+          {saving ? 'กำลังบันทึก...' : 'บันทึกสูตร'}
+        </button>
+        {msg && <div className="msg-ok">{msg}</div>}
+        {err && <div className="msg-err">{err}</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ── Tab: ประวัติ ── */
+function AssessmentsTab({ branches }) {
+  const [rows, setRows] = useState([]);
+  const [filterBranch, setFilterBranch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const modeLabel = { sell:'ขาย', buy:'รับซื้อ', trade:'เปลี่ยน' };
+  const modeColor = { sell:'var(--up)', buy:'var(--down)', trade:'var(--gold)' };
+
+  useEffect(() => {
+    setLoading(true);
+    let q = sb.from('assessments')
+      .select('*, branches(name), employees(name)')
+      .order('created_at', { ascending: false }).limit(500);
+    if (filterBranch) q = q.eq('branch_id', filterBranch);
+    q.then(({ data }) => { setRows(data || []); setLoading(false); });
+  }, [filterBranch]);
+
+  const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
+
+  return (
+    <div className="card" style={{overflowX:'auto'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:12}}>
+        <div>
+          <div className="card-title" style={{marginBottom:2}}>ประวัติใบประเมิน ({rows.length} รายการ)</div>
+          {rows.length > 0 && <div style={{fontSize:12,color:'var(--text-mute)',fontFamily:'var(--mono)'}}>ยอดรวม: {fmtNum(total)} บาท</div>}
+        </div>
+        <div className="f-input" style={{minWidth:180}}>
+          <select value={filterBranch} onChange={e=>setFilterBranch(e.target.value)}>
+            <option value="">ทุกสาขา</option>
+            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+        </div>
+      </div>
+      {loading ? <div className="spinner">กำลังโหลด...</div> : rows.length === 0 ? (
+        <div style={{color:'var(--text-mute)',fontSize:13,padding:'30px 0'}}>ยังไม่มีรายการ</div>
+      ) : (
+        <table>
+          <thead><tr>
+            <th>รหัสใบประเมิน</th><th>วัน เวลา</th><th>สาขา</th><th>พนักงาน</th><th>ประเภท</th><th>น้ำหนัก</th><th style={{textAlign:'right'}}>ยอดรวม</th>
+          </tr></thead>
+          <tbody>{rows.map(r => (
+            <tr key={r.id}>
+              <td className="mono">{r.ref_code}</td>
+              <td style={{fontSize:12,color:'var(--text-mute)'}}>{thaiDt(r.created_at)}</td>
+              <td>{r.branches?.name ?? '—'}</td>
+              <td>{r.employees?.name ?? r.employee_id_card}</td>
+              <td><span className="badge" style={{color:modeColor[r.mode]||'var(--text-mute)',borderColor:'currentColor'}}>{modeLabel[r.mode]||r.mode}</span></td>
+              <td style={{fontFamily:'var(--mono)',fontSize:12}}>{r.weight_baht} บาท</td>
+              <td style={{fontFamily:'var(--mono)',textAlign:'right',color:'var(--gold-bright)',fontWeight:500}}>{fmtNum(r.total)}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+/* ── App ── */
+const TABS = ['สาขา', 'พนักงาน', 'สูตรคำนวณ', 'ประวัติใบประเมิน'];
+
+function AdminApp() {
+  const [session, setSession] = useState(null);
+  const [checking, setChecking] = useState(true);
+  const [tab, setTab] = useState(0);
+  const [branches, setBranches] = useState([]);
+
+  useEffect(() => {
+    sb.auth.getSession().then(({ data: { session } }) => { setSession(session); setChecking(false); });
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    sb.from('branches').select('*').order('created_at').then(({ data }) => data && setBranches(data));
+  }, [session, tab]);
+
+  const logout = () => sb.auth.signOut();
+
+  if (checking) return <div className="spinner">กำลังตรวจสอบ...</div>;
+  if (!session) return <LoginPage onLogin={() => {}} />;
+
+  return (
+    <div className="admin-wrap">
+      <header className="admin-header">
+        <div>
+          <div className="admin-brand">GoldMark Admin</div>
+          <div className="admin-sub">ห้างทอง รัตนกาญจน์ · ระบบหลังบ้าน</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span style={{fontSize:12,color:'var(--text-mute)',fontFamily:'var(--mono)'}}>{session.user.email}</span>
+          <button className="btn-ghost btn-sm" onClick={logout}>ออกจากระบบ</button>
+        </div>
+      </header>
+
+      <div className="tab-bar">
+        {TABS.map((t,i) => <button key={i} className={`tab${tab===i?' active':''}`} onClick={()=>setTab(i)}>{t}</button>)}
+      </div>
+
+      <div className="content">
+        {tab === 0 && <BranchesTab />}
+        {tab === 1 && <EmployeesTab branches={branches} />}
+        {tab === 2 && <ConfigsTab branches={branches} />}
+        {tab === 3 && <AssessmentsTab branches={branches} />}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<AdminApp />);
+</script>
+</body>
+</html>
