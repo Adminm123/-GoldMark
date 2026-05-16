@@ -798,27 +798,33 @@ function PricesSection({ prices, lastChange, status, strTime, onRefresh }) {
 }
 
 /* ── Calculator ── */
-function Calculator({ prices, onCommit, apiStatus, apiSell }) {
+function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
   const [mode, setMode] = useState('sell');
   const [weight, setWeight] = useState('1');
   const [unit, setUnit] = useState('baht');
   const [discount, setDiscount] = useState('0');
+  const [laborFee, setLaborFee] = useState('0');
   const weightBaht = toBaht(weight, unit);
+  const barConfig = branch?.branch_configs?.find(c => c.gold_type === 'bar') ?? null;
   const calc = useMemo(() => {
     const p = prices.bar;
     const pricePerBaht = mode === 'sell' ? p.sell : Math.round(p.sell * 0.95);
     const basePrice = pricePerBaht * weightBaht;
-    const total = basePrice - Number(discount || 0);
+    const laborFeeNum = Number(laborFee || 0);
+    const discountNum = Number(discount || 0);
+    const total = basePrice + laborFeeNum - discountNum;
     const descAction = mode === 'sell' ? 'ขายทองให้ลูกค้า' : 'รับซื้อทองจากลูกค้า';
-    return { pricePerBaht, basePrice, total, descAction };
-  }, [mode, weight, unit, discount, prices, weightBaht]);
+    const laborWarn = barConfig && laborFeeNum > 0 && (laborFeeNum < barConfig.labor_fee_min || laborFeeNum > barConfig.labor_fee_max);
+    const discountWarn = barConfig && discountNum > 0 && discountNum > barConfig.discount_max_baht;
+    return { pricePerBaht, basePrice, total, descAction, laborFeeNum, discountNum, laborWarn, discountWarn };
+  }, [mode, weight, unit, discount, laborFee, prices, weightBaht, barConfig]);
   const apiOffline = apiStatus !== 'ok';
   const canCommit = weightBaht > 0 && calc.total > 0 && !isNaN(calc.total) && !apiOffline;
   const commit = () => {
     if (!canCommit) return;
     onCommit({ mode, type:'bar', weight:Number(weight), unit, weightBaht,
-      pricePerBaht: calc.pricePerBaht, labor:0, laborFee:0,
-      basePrice: calc.basePrice, discount: Number(discount||0),
+      pricePerBaht: calc.pricePerBaht, labor:0, laborFee: calc.laborFeeNum,
+      basePrice: calc.basePrice, discount: calc.discountNum,
       oldType:null, oldWeight:0, oldUnit:null, oldWeightBaht:0, oldPricePerBaht:0, oldBuy:0,
       total: calc.total, descAction: calc.descAction,
       apiSell: apiSell });
@@ -856,11 +862,26 @@ function Calculator({ prices, onCommit, apiStatus, apiSell }) {
             </div>
             <div className="extra-grid">
               <div className="field">
-                <label><span className="th">ส่วนลด</span> Discount</label>
+                <label>
+                  <span className="th">ค่ากำเหน็จ</span> Labor Fee
+                  {barConfig && <span style={{color:'var(--text-mute)',fontSize:10,marginLeft:8,fontFamily:'var(--mono)'}}>({fmt(barConfig.labor_fee_min,0)}–{fmt(barConfig.labor_fee_max,0)} บาท)</span>}
+                </label>
+                <div className="simple-input">
+                  <input type="text" inputMode="numeric" value={laborFee}
+                    onChange={e => setLaborFee(e.target.value.replace(/[^0-9]/g,''))} />
+                </div>
+                {calc.laborWarn && <div style={{fontSize:11,color:'#e09478',marginTop:4}}>⚠ นอกช่วงที่กำหนด</div>}
+              </div>
+              <div className="field">
+                <label>
+                  <span className="th">ส่วนลด</span> Discount
+                  {barConfig && barConfig.discount_max_baht > 0 && <span style={{color:'var(--text-mute)',fontSize:10,marginLeft:8,fontFamily:'var(--mono)'}}}>(สูงสุด {fmt(barConfig.discount_max_baht,0)} บาท)</span>}
+                </label>
                 <div className="simple-input">
                   <input type="text" inputMode="numeric" value={discount}
                     onChange={e => setDiscount(e.target.value.replace(/[^0-9]/g,''))} />
                 </div>
+                {calc.discountWarn && <div style={{fontSize:11,color:'#e09478',marginTop:4}}>⚠ เกินส่วนลดสูงสุด</div>}
               </div>
             </div>
           </div>
@@ -877,8 +898,11 @@ function Calculator({ prices, onCommit, apiStatus, apiSell }) {
               <span>ราคาเนื้อทอง ({fmt(weightBaht,2)} × {fmt(calc.pricePerBaht,0)})</span>
               <span className="v">{fmt(calc.basePrice,2)}</span>
             </div>
-            {Number(discount)>0 && (
-              <div className="row"><span>ส่วนลด</span><span className="v" style={{color:'var(--down)'}}>− {fmt(Number(discount),2)}</span></div>
+            {calc.laborFeeNum > 0 && (
+              <div className="row"><span>ค่ากำเหน็จ</span><span className="v" style={{color:'var(--gold)'}}>+ {fmt(calc.laborFeeNum,2)}</span></div>
+            )}
+            {calc.discountNum > 0 && (
+              <div className="row"><span>ส่วนลด</span><span className="v" style={{color:'var(--down)'}}>− {fmt(calc.discountNum,2)}</span></div>
             )}
             <div className="row total"><span>รวมสุทธิ</span><span className="v">฿ {fmt(calc.total,2)}</span></div>
           </div>
@@ -890,7 +914,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell }) {
           )}
           <div className="action-row">
             <button className="btn-primary" disabled={!canCommit} onClick={commit}>บันทึก &amp; ออกใบประเมิน</button>
-            <button className="btn-ghost" onClick={() => { setWeight(''); setDiscount('0'); }}>ล้าง</button>
+            <button className="btn-ghost" onClick={() => { setWeight(''); setDiscount('0'); setLaborFee('0'); }}>ล้าง</button>
           </div>
         </div>
       </div>
@@ -1276,7 +1300,7 @@ function App() {
       <SiteHeader shopName={t.shopName} shopEn={t.shopEn} onTweaks={() => setTweaksOpen(o => !o)} />
       <main className="page">
         <PricesSection prices={prices} lastChange={lastChange} status={status} strTime={strTime} onRefresh={refresh} />
-        <Calculator prices={prices} onCommit={handleCommit} apiStatus={status} apiSell={sell} />
+        <Calculator prices={prices} onCommit={handleCommit} apiStatus={status} apiSell={sell} branch={branch} />
         <PriceChart data={chartData} range={range} setRange={setRange} />
         <HistorySection records={history} onLookup={r => setActiveReceipt(r)} query={query} setQuery={setQuery} />
       </main>
