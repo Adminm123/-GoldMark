@@ -11,26 +11,26 @@
 
 <style>
 :root {
-  --bg: #1c1c1e;
-  --bg-2: #2c2c2e;
-  --bg-3: #3a3a3c;
-  --surface: rgba(44, 44, 46, 0.85);
-  --surface-2: rgba(58, 58, 60, 0.9);
-  --border: rgba(255, 255, 255, 0.1);
-  --border-bright: rgba(255, 255, 255, 0.17);
+  --bg: #f2f2f7;
+  --bg-2: #ffffff;
+  --bg-3: #e5e5ea;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-2: rgba(245, 245, 247, 0.95);
+  --border: rgba(0, 0, 0, 0.09);
+  --border-bright: rgba(0, 0, 0, 0.16);
 
-  --gold: #f5c542;
-  --gold-bright: #ffe066;
-  --gold-soft: #c9a24a;
-  --gold-deep: #8b6420;
-  --gold-glow: rgba(245, 197, 66, 0.3);
+  --gold: #b07d0f;
+  --gold-bright: #c9920e;
+  --gold-soft: #a06a0a;
+  --gold-deep: #7a5008;
+  --gold-glow: rgba(176, 125, 15, 0.2);
 
-  --text: rgba(255, 255, 255, 0.88);
-  --text-dim: rgba(255, 255, 255, 0.6);
-  --text-mute: rgba(255, 255, 255, 0.35);
+  --text: rgba(0, 0, 0, 0.85);
+  --text-dim: rgba(0, 0, 0, 0.55);
+  --text-mute: rgba(0, 0, 0, 0.35);
 
-  --up: #32d74b;
-  --down: #ff453a;
+  --up: #34c759;
+  --down: #ff3b30;
 
   --sans: -apple-system, BlinkMacSystemFont, 'Noto Serif Thai', 'Segoe UI', sans-serif;
   --serif-th: 'Noto Serif Thai', serif;
@@ -64,7 +64,7 @@ a { color: var(--gold-bright); text-decoration: none; }
 .site-header {
   height: 52px;
   border-bottom: 1px solid var(--border);
-  background: rgba(28, 28, 30, 0.9);
+  background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   position: sticky;
@@ -150,7 +150,7 @@ a { color: var(--gold-bright); text-decoration: none; }
 }
 .price-row .col .value {
   font-family: var(--mono); font-weight: 500; font-size: 40px; line-height: 1.05;
-  background: linear-gradient(135deg, #c9a24a 0%, #ffe066 40%, #f5c542 60%, #c9a24a 100%);
+  background: linear-gradient(135deg, #7a5008 0%, #c9840f 40%, #b07d0f 60%, #7a5008 100%);
   background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; animation: goldSheen 5s linear infinite;
 }
@@ -236,7 +236,7 @@ a { color: var(--gold-bright); text-decoration: none; }
 .result-title { font-size: 16px; color: var(--text); margin-bottom: 20px; font-family: var(--serif-th); }
 .result-amount {
   font-family: var(--mono); font-size: 50px; font-weight: 500; line-height: 1; margin: 14px 0 6px;
-  background: linear-gradient(135deg, #c9a24a 0%, #ffe066 40%, #f5c542 60%, #c9a24a 100%);
+  background: linear-gradient(135deg, #7a5008 0%, #c9840f 40%, #b07d0f 60%, #7a5008 100%);
   background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; animation: goldSheen 5s linear infinite;
 }
@@ -296,7 +296,7 @@ a { color: var(--gold-bright); text-decoration: none; }
 }
 .history-table th .th { display: block; font-family: var(--serif-th); color: var(--text-dim); text-transform: none; font-size: 12px; margin-top: 1px; font-weight: 400; }
 .history-table td { padding: 14px 16px; border-top: 1px solid var(--border); color: var(--text-dim); vertical-align: middle; }
-.history-table tr:hover td { background: rgba(255,255,255,0.025); }
+.history-table tr:hover td { background: rgba(0,0,0,0.02); }
 .history-table .code { font-family: var(--mono); color: var(--gold); font-size: 12px; }
 .history-table .amount { font-family: var(--mono); color: var(--text); text-align: right; font-weight: 500; }
 .history-table .badge {
@@ -390,7 +390,6 @@ a { color: var(--gold-bright); text-decoration: none; }
   .price-row .col:first-child { padding-top: 0; border-top: none; }
 }
 @media print {
-  body { background: white; color: black; }
   .site-header, .prices, .chart-card, .calc-layout, .history-section, .site-foot { display: none !important; }
   .receipt-backdrop { position: static; background: white; backdrop-filter: none; padding: 0; }
   .receipt { box-shadow: none; max-width: none; }
@@ -455,8 +454,8 @@ function CommitModal({ record, branch, onSuccess, onCancel }) {
   };
 
   return (
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(6px)',zIndex:200,display:'grid',placeItems:'center',padding:20,animation:'fade 0.2s'}}>
-      <div style={{background:'var(--bg-2)',border:'1px solid var(--border-bright)',padding:40,maxWidth:420,width:'100%',boxShadow:'0 40px 80px rgba(0,0,0,0.6)'}}>
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',backdropFilter:'blur(8px)',zIndex:200,display:'grid',placeItems:'center',padding:20,animation:'fade 0.2s'}}>
+      <div style={{background:'var(--bg-2)',border:'1px solid var(--border)',borderRadius:14,padding:40,maxWidth:420,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,0.18)'}}>
         <div style={{fontFamily:'var(--serif-en)',fontStyle:'italic',color:'var(--gold)',fontSize:11,letterSpacing:'0.2em',textTransform:'uppercase',marginBottom:6}}>Confirm Assessment</div>
         <div style={{fontSize:18,fontWeight:700,marginBottom:4}}>ยืนยันการออกใบประเมิน</div>
         <div style={{fontSize:12,color:'var(--text-mute)',marginBottom:28,fontFamily:'var(--mono)',letterSpacing:'0.04em'}}>
@@ -807,7 +806,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
               <div className="field">
                 <label>
                   <span className="th">ส่วนลด</span> Discount
-                  {barConfig && barConfig.discount_max_baht > 0 && <span style={{color:'var(--text-mute)',fontSize:10,marginLeft:8,fontFamily:'var(--mono)'}}}>(สูงสุด {fmt(barConfig.discount_max_baht,0)} บาท)</span>}
+                  {barConfig && barConfig.discount_max_baht > 0 && <span style={{color:'var(--text-mute)',fontSize:10,marginLeft:8,fontFamily:'var(--mono)'}}>(สูงสุด {fmt(barConfig.discount_max_baht,0)} บาท)</span>}
                 </label>
                 <div className="simple-input">
                   <input type="text" inputMode="numeric" value={discount}
@@ -904,36 +903,36 @@ function PriceChart({ data, range, setRange }) {
         <svg className="chart-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
           <defs>
             <linearGradient id="ga" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#e6c779" stopOpacity="0.45"/>
-              <stop offset="100%" stopColor="#e6c779" stopOpacity="0"/>
+              <stop offset="0%" stopColor="#c9840f" stopOpacity="0.3"/>
+              <stop offset="100%" stopColor="#c9840f" stopOpacity="0"/>
             </linearGradient>
             <linearGradient id="gl" x1="0" x2="1">
-              <stop offset="0%" stopColor="#c9a24a"/>
-              <stop offset="50%" stopColor="#fae4b3"/>
-              <stop offset="100%" stopColor="#c9a24a"/>
+              <stop offset="0%" stopColor="#b07d0f"/>
+              <stop offset="50%" stopColor="#c9840f"/>
+              <stop offset="100%" stopColor="#b07d0f"/>
             </linearGradient>
           </defs>
           {ticks.map((t,i) => (
             <g key={i}>
-              <line x1={PL} x2={W-PR} y1={t.y} y2={t.y} stroke="#3d3120" strokeWidth="1" strokeDasharray={i===0||i===4?'0':'2 4'}/>
-              <text x={PL-8} y={t.y+4} fill="#9c8b6a" fontSize="10" textAnchor="end" fontFamily="monospace">{fmt(t.v,0)}</text>
+              <line x1={PL} x2={W-PR} y1={t.y} y2={t.y} stroke="rgba(0,0,0,0.07)" strokeWidth="1" strokeDasharray={i===0||i===4?'0':'2 4'}/>
+              <text x={PL-8} y={t.y+4} fill="rgba(0,0,0,0.4)" fontSize="10" textAnchor="end" fontFamily="monospace">{fmt(t.v,0)}</text>
             </g>
           ))}
           <path d={area} fill="url(#ga)"/>
           <path d={lineD} stroke="url(#gl)" strokeWidth="1.75" fill="none"/>
           {hover && (
             <g>
-              <line x1={hover.x} x2={hover.x} y1={PT} y2={H-PB} stroke="#e6c779" strokeOpacity="0.5" strokeDasharray="2 3"/>
-              <circle cx={hover.x} cy={hover.y} r="4" fill="#fae4b3" stroke="#1a1208" strokeWidth="1.5"/>
+              <line x1={hover.x} x2={hover.x} y1={PT} y2={H-PB} stroke="#b07d0f" strokeOpacity="0.4" strokeDasharray="2 3"/>
+              <circle cx={hover.x} cy={hover.y} r="4" fill="#c9840f" stroke="white" strokeWidth="1.5"/>
               <g transform={`translate(${Math.min(hover.x+10,W-150)},${Math.max(hover.y-30,PT)})`}>
-                <rect width="140" height="40" fill="#15110b" stroke="#50412a"/>
-                <text x="10" y="16" fill="#d8c89e" fontSize="11">{formatThaiDate(hover.date,{shortYear:true})}</text>
-                <text x="10" y="32" fill="#f4dba0" fontSize="13" fontFamily="monospace" fontWeight="500">{fmtInt(hover.value)} บาท</text>
+                <rect width="140" height="40" fill="rgba(255,255,255,0.96)" stroke="rgba(0,0,0,0.12)" rx="4"/>
+                <text x="10" y="16" fill="rgba(0,0,0,0.5)" fontSize="11">{formatThaiDate(hover.date,{shortYear:true})}</text>
+                <text x="10" y="32" fill="#b07d0f" fontSize="13" fontFamily="monospace" fontWeight="500">{fmtInt(hover.value)} บาท</text>
               </g>
             </g>
           )}
-          <text x={PL} y={H-8} fill="#9c8b6a" fontSize="10">{formatThaiDate(slice[0]?.date)}</text>
-          <text x={W-PR} y={H-8} fill="#9c8b6a" fontSize="10" textAnchor="end">{formatThaiDate(slice[slice.length-1]?.date)}</text>
+          <text x={PL} y={H-8} fill="rgba(0,0,0,0.4)" fontSize="10">{formatThaiDate(slice[0]?.date)}</text>
+          <text x={W-PR} y={H-8} fill="rgba(0,0,0,0.4)" fontSize="10" textAnchor="end">{formatThaiDate(slice[slice.length-1]?.date)}</text>
         </svg>
         <div className="chart-stats">
           <span>เปลี่ยนแปลง <b style={{color:change>=0?'var(--up)':'var(--down)'}}>{change>=0?'+':''}{fmt(change,0)} ({changePct>=0?'+':''}{fmt(changePct,2)}%)</b></span>

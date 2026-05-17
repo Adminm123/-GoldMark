@@ -12,23 +12,23 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <style>
 :root {
-  --bg: #1c1c1e;
-  --bg-2: #2c2c2e;
-  --bg-3: #3a3a3c;
-  --surface: rgba(44,44,46,0.85);
-  --border: rgba(255,255,255,0.1);
-  --border-bright: rgba(255,255,255,0.17);
+  --bg: #f2f2f7;
+  --bg-2: #ffffff;
+  --bg-3: #e5e5ea;
+  --surface: rgba(255,255,255,0.9);
+  --border: rgba(0,0,0,0.09);
+  --border-bright: rgba(0,0,0,0.16);
 
-  --gold: #f5c542;
-  --gold-bright: #ffe066;
-  --gold-soft: #c9a24a;
+  --gold: #b07d0f;
+  --gold-bright: #c9920e;
+  --gold-soft: #a06a0a;
 
-  --text: rgba(255,255,255,0.88);
-  --text-dim: rgba(255,255,255,0.6);
-  --text-mute: rgba(255,255,255,0.35);
+  --text: rgba(0,0,0,0.85);
+  --text-dim: rgba(0,0,0,0.55);
+  --text-mute: rgba(0,0,0,0.35);
 
-  --up: #32d74b;
-  --down: #ff453a;
+  --up: #34c759;
+  --down: #ff3b30;
 
   --sans: -apple-system, BlinkMacSystemFont, 'Noto Serif Thai', 'Segoe UI', sans-serif;
   --serif-th: 'Noto Serif Thai', serif;
@@ -47,8 +47,7 @@ input, select { font-family: inherit; }
 /* Login */
 .login-wrap {
   min-height: 100vh; display: grid; place-items: center; padding: 20px;
-  background: radial-gradient(ellipse 60% 50% at 20% 20%, rgba(245,197,66,0.06), transparent 65%),
-              radial-gradient(ellipse 60% 50% at 80% 80%, rgba(50,215,75,0.04), transparent 65%), var(--bg);
+  background: var(--bg);
 }
 .login-box {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
@@ -108,7 +107,7 @@ input, select { font-family: inherit; }
 .admin-header {
   height: 52px; border-bottom: 1px solid var(--border); padding: 0 24px;
   display: flex; align-items: center; justify-content: space-between;
-  background: rgba(28,28,30,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   position: sticky; top: 0; z-index: 10;
 }
 .admin-brand { display: flex; align-items: center; gap: 10px; }
@@ -124,7 +123,7 @@ input, select { font-family: inherit; }
 /* Tab bar */
 .tab-bar {
   display: flex; border-bottom: 1px solid var(--border);
-  background: rgba(28,28,30,0.6); padding: 0 24px; overflow-x: auto;
+  background: rgba(242,242,247,0.8); padding: 0 24px; overflow-x: auto;
   scrollbar-width: none;
 }
 .tab-bar::-webkit-scrollbar { display: none; }
@@ -157,7 +156,7 @@ th {
   background: var(--bg-3); font-weight: 500; font-family: var(--mono);
 }
 td { padding: 12px 14px; border-top: 1px solid var(--border); color: var(--text-dim); vertical-align: middle; }
-tr:hover td { background: rgba(255,255,255,0.025); }
+tr:hover td { background: rgba(0,0,0,0.02); }
 .mono { font-family: var(--mono); color: var(--gold); font-size: 12px; }
 .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-weight: 500; }
 .badge.on { background: rgba(50,215,75,0.12); color: var(--up); }
