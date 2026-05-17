@@ -1,0 +1,22 @@
+{
+  "name": "ระบบประเมินราคาทอง",
+  "short_name": "GoldMark",
+  "description": "ระบบประเมินและคำนวณราคาทองคำ",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f2f2f7",
+  "theme_color": "#b07d0f",
+  "lang": "th",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["finance", "business"]
+}
