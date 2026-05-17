@@ -583,6 +583,92 @@ body { overflow-x: hidden; }
   .receipt { box-shadow: none; max-width: none; }
 }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* ── Quick weight chips (in form) ── */
+.quick-weights { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.qw-chip {
+  background: var(--bg-3); border: 1.5px solid var(--border);
+  border-radius: 999px; padding: 5px 13px;
+  font-size: 13px; font-family: var(--serif-th);
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.qw-chip.active { background: var(--gold-soft); color: #fff; border-color: var(--gold-soft); }
+.qw-chip:not(.active):hover { border-color: var(--gold); color: var(--gold); background: rgba(176,125,15,0.06); }
+
+/* ── Show-customer button (in result panel) ── */
+.btn-show-customer {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 11px 16px; margin-bottom: 16px;
+  background: rgba(176,125,15,0.07); border: 1.5px solid rgba(176,125,15,0.28);
+  border-radius: var(--radius-sm); color: var(--gold);
+  font-size: 14px; font-family: var(--serif-th); font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-show-customer:hover { background: rgba(176,125,15,0.14); border-color: var(--gold); }
+
+/* ── Customer Display Overlay ── */
+.cust-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+  display: grid; place-items: center; padding: 16px; animation: fade 0.2s;
+}
+.cust-box {
+  background: #fff; border-radius: 22px;
+  padding: 48px 36px 36px; width: 100%; max-width: 460px;
+  text-align: center; position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.28);
+}
+.cust-x {
+  position: absolute; top: 14px; right: 14px;
+  background: #f2f2f7; border: none; border-radius: 50%;
+  width: 34px; height: 34px; font-size: 15px;
+  color: rgba(0,0,0,0.45); cursor: pointer; display: grid; place-items: center;
+}
+.cust-x:hover { background: #e5e5ea; }
+.cust-type-label {
+  font-size: 12px; color: rgba(0,0,0,0.4); letter-spacing: 0.08em;
+  text-transform: uppercase; font-family: var(--mono); margin-bottom: 16px;
+}
+.cust-weight-row {
+  font-size: 22px; font-weight: 600; color: rgba(0,0,0,0.75);
+  margin-bottom: 6px; font-family: var(--mono);
+}
+.cust-total {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 6px; margin: 6px 0 10px; line-height: 1;
+}
+.cust-baht { font-size: 34px; font-weight: 600; color: #a06a0a; font-family: var(--mono); padding-bottom: 8px; }
+.cust-num  { font-size: 80px; font-weight: 700; color: #b07d0f; font-family: var(--mono); letter-spacing: -0.03em; }
+.cust-ref  { font-size: 12px; color: rgba(0,0,0,0.35); margin-bottom: 28px; font-family: var(--mono); }
+.cust-chips-title { font-size: 11px; color: rgba(0,0,0,0.4); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.cust-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 28px; }
+.cust-chip {
+  background: #f2f2f7; border: 2px solid transparent; border-radius: 14px;
+  padding: 10px 14px; min-width: 62px;
+  font-size: 17px; font-weight: 600; font-family: var(--serif-th);
+  color: rgba(0,0,0,0.65); cursor: pointer; transition: all 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.cust-chip span { font-size: 10px; font-weight: 400; color: rgba(0,0,0,0.35); font-family: var(--mono); }
+.cust-chip.active { background: #b07d0f; color: #fff; border-color: #b07d0f; }
+.cust-chip.active span { color: rgba(255,255,255,0.65); }
+.cust-chip:not(.active):hover { border-color: #b07d0f; background: #fef9ee; color: #8b6420; }
+.cust-dismiss {
+  background: #f2f2f7; border: none; border-radius: var(--radius-sm);
+  padding: 13px 44px; font-size: 15px; font-family: var(--serif-th);
+  color: rgba(0,0,0,0.55); cursor: pointer; transition: all 0.15s;
+}
+.cust-dismiss:hover { background: #e5e5ea; }
+
+@media (max-width: 480px) {
+  .cust-box { padding: 44px 18px 32px; border-radius: 18px; }
+  .cust-num { font-size: 60px; }
+  .cust-baht { font-size: 28px; padding-bottom: 6px; }
+  .cust-chip { min-width: 52px; padding: 10px 8px; font-size: 15px; }
+  .quick-weights { gap: 8px; margin-top: 12px; }
+  .qw-chip { padding: 8px 14px; font-size: 14px; min-height: 40px; }
+  .btn-show-customer { padding: 13px; font-size: 15px; }
+}
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -916,6 +1002,49 @@ function PricesSection({ prices, lastChange, status, strTime, onRefresh }) {
   );
 }
 
+/* ── Customer Display ── */
+const QUICK_W = [
+  { label: 'ครึ่ง', v: '0.5' },
+  { label: '1',    v: '1'   },
+  { label: '1.5',  v: '1.5' },
+  { label: '2',    v: '2'   },
+  { label: '3',    v: '3'   },
+  { label: '4',    v: '4'   },
+  { label: '5',    v: '5'   },
+];
+
+function CustomerDisplay({ pricePerBaht, laborFeeNum, discountNum, mode, initWeight, onClose, onWeightChange }) {
+  const [dw, setDw] = useState(() => QUICK_W.some(q => q.v === initWeight) ? initWeight : '1');
+
+  const pick = (v) => { setDw(v); onWeightChange(v, 'baht'); };
+  const total = pricePerBaht * Number(dw) + laborFeeNum - discountNum;
+  const modeLabel = mode === 'sell' ? 'ราคาขายออก' : 'ราคารับซื้อ';
+
+  return (
+    <div className="cust-overlay" onClick={onClose}>
+      <div className="cust-box" onClick={e => e.stopPropagation()}>
+        <button className="cust-x" onClick={onClose}>✕</button>
+        <div className="cust-type-label">{modeLabel} · ทองคำแท่ง 96.5%</div>
+        <div className="cust-weight-row">{dw} บาทน้ำหนัก</div>
+        <div className="cust-total">
+          <span className="cust-baht">฿</span>
+          <span className="cust-num">{fmt(Math.max(total,0), 0)}</span>
+        </div>
+        <div className="cust-ref">ราคา {fmt(pricePerBaht,0)} บาท / 1 บาทน้ำหนัก</div>
+        <div className="cust-chips-title">เปรียบเทียบน้ำหนัก</div>
+        <div className="cust-chips">
+          {QUICK_W.map(({ label, v }) => (
+            <button key={v} className={`cust-chip ${dw===v?'active':''}`} onClick={() => pick(v)}>
+              {label}<span>บาท</span>
+            </button>
+          ))}
+        </div>
+        <button className="cust-dismiss" onClick={onClose}>ปิด</button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Calculator ── */
 function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
   const [mode, setMode] = useState('sell');
@@ -923,6 +1052,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
   const [unit, setUnit] = useState('baht');
   const [discount, setDiscount] = useState('0');
   const [laborFee, setLaborFee] = useState('0');
+  const [showCustomer, setShowCustomer] = useState(false);
   const weightBaht = toBaht(weight, unit);
   const barConfig = branch?.branch_configs?.find(c => c.gold_type === 'bar') ?? null;
   const calc = useMemo(() => {
@@ -978,6 +1108,15 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
               <div style={{fontSize:11,color:'var(--text-mute)',marginTop:6,fontFamily:'var(--mono)'}}>
                 = {fmt(weightBaht,2)} บาท · {fmt(weightBaht*GRAMS_PER_BAHT,2)} ก.
               </div>
+              <div className="quick-weights">
+                {QUICK_W.map(({ label, v }) => (
+                  <button key={v}
+                    className={`qw-chip ${weight===v && unit==='baht' ? 'active' : ''}`}
+                    onClick={() => { setWeight(v); setUnit('baht'); }}>
+                    {label} บ.
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="extra-grid">
               <div className="field">
@@ -1012,6 +1151,9 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
             <span className="baht-sign">฿</span>{fmt(Math.max(calc.total,0),2)}
           </div>
           <div className="result-sub">น้ำหนักทองคำ {fmt(weightBaht,2)} บาท ({fmt(weightBaht*GRAMS_PER_BAHT,2)} กรัม)</div>
+          <button className="btn-show-customer" onClick={() => setShowCustomer(true)}>
+            <span>👁</span> แสดงราคาให้ลูกค้าดู
+          </button>
           <div className="result-breakdown">
             <div className="row">
               <span>ราคาเนื้อทอง ({fmt(weightBaht,2)} × {fmt(calc.pricePerBaht,0)})</span>
@@ -1038,6 +1180,17 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
         </div>
       </div>
     </section>
+    {showCustomer && (
+      <CustomerDisplay
+        pricePerBaht={calc.pricePerBaht}
+        laborFeeNum={calc.laborFeeNum}
+        discountNum={calc.discountNum}
+        mode={mode}
+        initWeight={unit==='baht' ? weight : '1'}
+        onClose={() => setShowCustomer(false)}
+        onWeightChange={(v, u) => { setWeight(v); setUnit(u); setShowCustomer(false); }}
+      />
+    )}
   );
 }
 
