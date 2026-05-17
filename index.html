@@ -1079,6 +1079,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
       apiSell: apiSell });
   };
   return (
+    <>
     <section>
       <div className="section-head">
         <div className="title"><span className="index">No. II.</span><h2>คำนวณราคา</h2></div>
@@ -1191,6 +1192,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
         onWeightChange={(v, u) => { setWeight(v); setUnit(u); setShowCustomer(false); }}
       />
     )}
+    </>
   );
 }
 
