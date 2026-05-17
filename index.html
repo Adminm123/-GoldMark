@@ -584,6 +584,58 @@ body { overflow-x: hidden; }
 }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
+/* ── Transaction mode tabs ── */
+.tx-tabs {
+  display: flex; margin-bottom: 18px;
+  border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden;
+}
+.tx-tab {
+  flex: 1; background: transparent; border: none; border-right: 1px solid var(--border);
+  padding: 11px 4px; font-size: 13px; font-family: var(--serif-th);
+  color: var(--text-mute); cursor: pointer; transition: all 0.15s; line-height: 1.3;
+}
+.tx-tab:last-child { border-right: none; }
+.tx-tab.active { background: var(--gold-soft); color: #fff; font-weight: 600; }
+.tx-tab:not(.active):hover { color: var(--text-dim); background: var(--bg-3); }
+
+/* ── Trade old-gold section ── */
+.trade-old-section {
+  background: rgba(176,125,15,0.06); border: 1.5px solid rgba(176,125,15,0.22);
+  border-radius: var(--radius-sm); padding: 14px;
+}
+.trade-old-label {
+  font-size: 10px; color: var(--gold); font-family: var(--mono);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; font-weight: 600;
+}
+.old-value-badge {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 11px; color: var(--text-mute); font-family: var(--mono); margin-top: 8px;
+}
+.old-value-badge .ov { color: var(--down); font-weight: 700; font-size: 13px; }
+
+/* ── Trade detail breakdown ── */
+.trade-detail {
+  border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px;
+  display: grid; gap: 7px; font-size: 13px;
+}
+.trade-detail .tr {
+  display: flex; justify-content: space-between; align-items: baseline;
+  color: var(--text-dim); gap: 8px;
+}
+.trade-detail .tr > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trade-detail .tv { font-family: var(--mono); flex-shrink: 0; font-weight: 500; color: var(--text); }
+.trade-detail .tr.old .tv { color: var(--down); }
+.trade-detail .tr.new .tv { color: var(--up); }
+.trade-detail .tr.sum { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px; font-weight: 600; }
+.trade-detail .tr.sum .tv { font-size: 17px; }
+
+@media (max-width: 480px) {
+  .tx-tab { font-size: 12px; padding: 12px 3px; }
+  .trade-old-section { padding: 12px; }
+  .trade-detail { font-size: 12px; gap: 6px; }
+  .trade-detail .tr.sum .tv { font-size: 15px; }
+}
+
 /* ── Quick weight chips (in form) ── */
 .quick-weights { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
 .qw-chip {
@@ -1045,66 +1097,191 @@ function CustomerDisplay({ pricePerBaht, laborFeeNum, discountNum, mode, initWei
   );
 }
 
+/* ── Calculator helpers ── */
+function getTierFee(weightBaht, tiers, fallback) {
+  if (Array.isArray(tiers) && tiers.length > 0) {
+    for (const t of tiers) {
+      if (!t.max_weight || weightBaht <= Number(t.max_weight)) return Number(t.fee) || 0;
+    }
+    return Number(tiers[tiers.length-1]?.fee) || 0;
+  }
+  return Number(fallback) || 0;
+}
+
 /* ── Calculator ── */
 function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
-  const [mode, setMode] = useState('sell');
+  const [txMode, setTxMode] = useState('sell');      // sell | buy | trade
+  const [goldType, setGoldType] = useState('bar');   // bar | jewelry
   const [weight, setWeight] = useState('1');
   const [unit, setUnit] = useState('baht');
+  const [oldWeight, setOldWeight] = useState('1');
+  const [oldUnit, setOldUnit] = useState('baht');
+  const [laborOverride, setLaborOverride] = useState('');
   const [discount, setDiscount] = useState('0');
-  const [laborFee, setLaborFee] = useState('0');
   const [showCustomer, setShowCustomer] = useState(false);
-  const weightBaht = toBaht(weight, unit);
-  const barConfig = branch?.branch_configs?.find(c => c.gold_type === 'bar') ?? null;
+
+  const weightBaht    = toBaht(weight, unit);
+  const oldWeightBaht = toBaht(oldWeight || '0', oldUnit);
+
+  const cfg    = branch?.branch_configs?.find(c => c.gold_type === goldType) ?? null;
+  const barCfg = branch?.branch_configs?.find(c => c.gold_type === 'bar') ?? null;
+
+  /* ราคา */
+  const sellPrice = prices.bar.sell;
+  const buyPrice  = goldType === 'bar'
+    ? prices.bar.buy
+    : Math.round(prices.bar.buy * (1 - (cfg?.jewelry_buy_deduct_pct ?? 2) / 100));
+
+  /* ค่ากำเหน็จ auto จาก tier */
+  const autoLabor    = useMemo(() => getTierFee(weightBaht, cfg?.labor_fee_json, cfg?.labor_fee_min ?? 0), [weightBaht, cfg]);
+  const autoExchange = useMemo(() => getTierFee(weightBaht, cfg?.exchange_fee_json, 0), [weightBaht, cfg]);
+
+  /* trade sub-type */
+  const tradeType = useMemo(() => {
+    if (txMode !== 'trade') return null;
+    if (Math.abs(weightBaht - oldWeightBaht) < 0.001) return 'exchange';
+    return weightBaht > oldWeightBaht ? 'add' : 'reduce';
+  }, [txMode, weightBaht, oldWeightBaht]);
+
+  /* ค่ากำเหน็จจริง */
+  const laborNum = useMemo(() => {
+    if (laborOverride !== '') return Number(laborOverride) || 0;
+    if (txMode === 'buy') return 0;
+    if (tradeType === 'exchange') return autoExchange;
+    return autoLabor;
+  }, [laborOverride, txMode, tradeType, autoLabor, autoExchange]);
+
+  const discountNum = Number(discount) || 0;
+
   const calc = useMemo(() => {
-    const p = prices.bar;
-    const pricePerBaht = mode === 'sell' ? p.sell : Math.round(p.sell * 0.95);
-    const basePrice = pricePerBaht * weightBaht;
-    const laborFeeNum = Number(laborFee || 0);
-    const discountNum = Number(discount || 0);
-    const total = basePrice + laborFeeNum - discountNum;
-    const descAction = mode === 'sell' ? 'ขายทองให้ลูกค้า' : 'รับซื้อทองจากลูกค้า';
-    const laborWarn = barConfig && laborFeeNum > 0 && (laborFeeNum < barConfig.labor_fee_min || laborFeeNum > barConfig.labor_fee_max);
-    const discountWarn = barConfig && discountNum > 0 && discountNum > barConfig.discount_max_baht;
-    return { pricePerBaht, basePrice, total, descAction, laborFeeNum, discountNum, laborWarn, discountWarn };
-  }, [mode, weight, unit, discount, laborFee, prices, weightBaht, barConfig]);
+    /* ─ ขายทอง ─ */
+    if (txMode === 'sell') {
+      const base  = sellPrice * weightBaht;
+      const total = base + laborNum - discountNum;
+      return {
+        pricePerBaht: sellPrice, base, total, laborNum, discountNum,
+        customerPays: Math.max(total, 0), shopReturns: 0, oldValue: 0,
+        descAction: goldType==='bar' ? 'ขายทองแท่งให้ลูกค้า' : 'ขายทองรูปพรรณให้ลูกค้า',
+        warnLabor: cfg && laborNum>0 && (laborNum<(cfg.labor_fee_min||0) || laborNum>(cfg.labor_fee_max||99999)),
+        warnDiscount: cfg && discountNum>0 && discountNum>(cfg.discount_max_baht||99999),
+      };
+    }
+    /* ─ รับซื้อ ─ */
+    if (txMode === 'buy') {
+      const base = buyPrice * weightBaht;
+      return {
+        pricePerBaht: buyPrice, base, total: base, laborNum: 0, discountNum: 0,
+        customerPays: 0, shopReturns: base, oldValue: 0,
+        descAction: goldType==='bar' ? 'รับซื้อทองแท่งจากลูกค้า' : 'รับซื้อทองรูปพรรณจากลูกค้า',
+        warnLabor: false, warnDiscount: false,
+      };
+    }
+    /* ─ เปลี่ยน/ต่อ/ตีลด ─ */
+    const oldValue = oldWeightBaht * buyPrice;
+    if (tradeType === 'exchange') {
+      return {
+        pricePerBaht: sellPrice, base: 0, total: laborNum, laborNum, discountNum: 0,
+        customerPays: laborNum, shopReturns: 0, oldValue,
+        descAction: 'เปลี่ยนทองน้ำหนักเท่ากัน',
+        warnLabor: false, warnDiscount: false,
+      };
+    }
+    const newBase = sellPrice * weightBaht;
+    const net     = (newBase + laborNum - discountNum) - oldValue;
+    return {
+      pricePerBaht: sellPrice, base: newBase, total: Math.abs(net), laborNum, discountNum,
+      customerPays: net > 0 ? net : 0, shopReturns: net < 0 ? Math.abs(net) : 0,
+      oldValue, newBase, net,
+      descAction: tradeType==='add' ? 'ต่อทอง / เพิ่มน้ำหนัก' : 'ตีลด / ลดน้ำหนัก',
+      warnLabor: false, warnDiscount: false,
+    };
+  }, [txMode, goldType, sellPrice, buyPrice, weightBaht, oldWeightBaht, laborNum, discountNum, tradeType, cfg]);
+
   const apiOffline = apiStatus !== 'ok';
-  const canCommit = weightBaht > 0 && calc.total > 0 && !isNaN(calc.total) && !apiOffline;
+  const hasResult  = calc.customerPays > 0 || calc.shopReturns > 0;
+  const canCommit  = !apiOffline && weightBaht > 0 && hasResult &&
+    (txMode !== 'trade' || oldWeightBaht > 0);
+
   const commit = () => {
     if (!canCommit) return;
-    onCommit({ mode, type:'bar', weight:Number(weight), unit, weightBaht,
-      pricePerBaht: calc.pricePerBaht, labor:0, laborFee: calc.laborFeeNum,
-      basePrice: calc.basePrice, discount: calc.discountNum,
-      oldType:null, oldWeight:0, oldUnit:null, oldWeightBaht:0, oldPricePerBaht:0, oldBuy:0,
-      total: calc.total, descAction: calc.descAction,
-      apiSell: apiSell });
+    onCommit({
+      mode: txMode, type: goldType,
+      weight: Number(weight), unit, weightBaht,
+      pricePerBaht: calc.pricePerBaht,
+      labor: 0, laborFee: calc.laborNum,
+      basePrice: calc.base, discount: discountNum,
+      oldWeight: Number(oldWeight)||0, oldUnit, oldWeightBaht,
+      oldPricePerBaht: buyPrice, oldBuy: calc.oldValue,
+      total: txMode === 'buy' ? calc.shopReturns : calc.customerPays,
+      descAction: calc.descAction, apiSell,
+      tradeType: tradeType ?? undefined,
+    });
   };
+
+  const reset = () => { setWeight('1'); setOldWeight('1'); setDiscount('0'); setLaborOverride(''); };
+
+  /* ─ UI ─ */
+  const UnitPick = ({ val, setVal }) => (
+    <div className="unit-pick">
+      {[['baht','บาท'],['salueng','สลึง'],['gram','กรัม']].map(([u,l]) => (
+        <button key={u} className={val===u?'active':''} onClick={() => setVal(u)}>{l}</button>
+      ))}
+    </div>
+  );
+
   return (
     <>
     <section>
       <div className="section-head">
         <div className="title"><span className="index">No. II.</span><h2>คำนวณราคา</h2></div>
-        <span className="meta">CALCULATOR · GOLD BAR</span>
+        <span className="meta">CALCULATOR</span>
       </div>
       <div className="calc-layout">
+
+        {/* ── Form ── */}
         <div className="calc-form">
+          {/* Mode tabs */}
+          <div className="tx-tabs">
+            {[['sell','ขายทอง'],['buy','รับซื้อ'],['trade','เปลี่ยนทอง']].map(([m,l]) => (
+              <button key={m} className={`tx-tab ${txMode===m?'active':''}`} onClick={() => setTxMode(m)}>{l}</button>
+            ))}
+          </div>
+
           <div className="field-group">
+            {/* Gold type */}
             <div className="field">
-              <label><span className="th">ประเภทรายการ</span> Transaction</label>
+              <label><span className="th">ชนิดทอง</span></label>
               <div className="seg">
-                <button className={mode==='sell'?'active':''} onClick={() => setMode('sell')}>ขายให้ลูกค้า</button>
-                <button className={mode==='buy'?'active':''} onClick={() => setMode('buy')}>รับซื้อจากลูกค้า</button>
+                <button className={goldType==='bar'?'active':''} onClick={() => setGoldType('bar')}>ทองคำแท่ง</button>
+                <button className={goldType==='jewelry'?'active':''} onClick={() => setGoldType('jewelry')}>ทองรูปพรรณ</button>
               </div>
             </div>
+
+            {/* Old gold (trade only) */}
+            {txMode === 'trade' && (
+              <div className="trade-old-section">
+                <div className="trade-old-label">ทองที่ลูกค้านำมา</div>
+                <div className="weight-input">
+                  <input type="text" inputMode="decimal" value={oldWeight}
+                    onChange={e => setOldWeight(e.target.value.replace(/[^0-9.]/g,''))} placeholder="0.00" />
+                  <UnitPick val={oldUnit} setVal={setOldUnit} />
+                </div>
+                <div className="old-value-badge">
+                  = {fmt(oldWeightBaht,2)} บาท &nbsp;·&nbsp; มูลค่ารับซื้อ
+                  <span className="ov">฿ {fmt(oldWeightBaht * buyPrice, 0)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* New / main weight */}
             <div className="field">
-              <label><span className="th">น้ำหนักทองคำแท่ง</span> Weight</label>
+              <label>
+                <span className="th">{txMode==='trade' ? 'ทองที่ต้องการ' : 'น้ำหนักทอง'}</span>
+              </label>
               <div className="weight-input">
                 <input type="text" inputMode="decimal" value={weight}
                   onChange={e => setWeight(e.target.value.replace(/[^0-9.]/g,''))} placeholder="0.00" />
-                <div className="unit-pick">
-                  <button className={unit==='baht'?'active':''} onClick={() => setUnit('baht')}>บาท</button>
-                  <button className={unit==='salueng'?'active':''} onClick={() => setUnit('salueng')}>สลึง</button>
-                  <button className={unit==='gram'?'active':''} onClick={() => setUnit('gram')}>กรัม</button>
-                </div>
+                <UnitPick val={unit} setVal={setUnit} />
               </div>
               <div style={{fontSize:11,color:'var(--text-mute)',marginTop:6,fontFamily:'var(--mono)'}}>
                 = {fmt(weightBaht,2)} บาท · {fmt(weightBaht*GRAMS_PER_BAHT,2)} ก.
@@ -1112,71 +1289,132 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
               <div className="quick-weights">
                 {QUICK_W.map(({ label, v }) => (
                   <button key={v}
-                    className={`qw-chip ${weight===v && unit==='baht' ? 'active' : ''}`}
+                    className={`qw-chip ${weight===v && unit==='baht'?'active':''}`}
                     onClick={() => { setWeight(v); setUnit('baht'); }}>
                     {label} บ.
                   </button>
                 ))}
               </div>
             </div>
-            <div className="extra-grid">
+
+            {/* Labor fee / exchange fee (not for buy) */}
+            {txMode !== 'buy' && (
               <div className="field">
                 <label>
-                  <span className="th">ค่ากำเหน็จ</span> Labor Fee
-                  {barConfig && <span style={{color:'var(--text-mute)',fontSize:10,marginLeft:8,fontFamily:'var(--mono)'}}>({fmt(barConfig.labor_fee_min,0)}–{fmt(barConfig.labor_fee_max,0)} บาท)</span>}
+                  <span className="th">{tradeType==='exchange' ? 'ค่าเปลี่ยน' : 'ค่ากำเหน็จ'}</span>
+                  <span style={{fontSize:10,color:'var(--text-mute)',marginLeft:8,fontFamily:'var(--mono)'}}>
+                    auto {fmt(tradeType==='exchange'?autoExchange:autoLabor,0)} บาท
+                  </span>
                 </label>
                 <div className="simple-input">
-                  <input type="text" inputMode="numeric" value={laborFee}
-                    onChange={e => setLaborFee(e.target.value.replace(/[^0-9]/g,''))} />
+                  <input type="text" inputMode="numeric" value={laborOverride}
+                    onChange={e => setLaborOverride(e.target.value.replace(/[^0-9]/g,''))}
+                    placeholder={String(tradeType==='exchange'?autoExchange:autoLabor)} />
                 </div>
-                {calc.laborWarn && <div style={{fontSize:11,color:'#e09478',marginTop:4}}>⚠ นอกช่วงที่กำหนด</div>}
+                {calc.warnLabor && <div style={{fontSize:11,color:'#e09478',marginTop:4}}>⚠ นอกช่วงที่กำหนด</div>}
               </div>
+            )}
+
+            {/* Discount (sell only) */}
+            {txMode === 'sell' && (
               <div className="field">
                 <label>
-                  <span className="th">ส่วนลด</span> Discount
-                  {barConfig && barConfig.discount_max_baht > 0 && <span style={{color:'var(--text-mute)',fontSize:10,marginLeft:8,fontFamily:'var(--mono)'}}>(สูงสุด {fmt(barConfig.discount_max_baht,0)} บาท)</span>}
+                  <span className="th">ส่วนลด</span>
+                  {cfg?.discount_max_baht > 0 && (
+                    <span style={{fontSize:10,color:'var(--text-mute)',marginLeft:8,fontFamily:'var(--mono)'}}>
+                      (สูงสุด {fmt(cfg.discount_max_baht,0)} บาท)
+                    </span>
+                  )}
                 </label>
                 <div className="simple-input">
                   <input type="text" inputMode="numeric" value={discount}
                     onChange={e => setDiscount(e.target.value.replace(/[^0-9]/g,''))} />
                 </div>
-                {calc.discountWarn && <div style={{fontSize:11,color:'#e09478',marginTop:4}}>⚠ เกินส่วนลดสูงสุด</div>}
+                {calc.warnDiscount && <div style={{fontSize:11,color:'#e09478',marginTop:4}}>⚠ เกินส่วนลดสูงสุด</div>}
               </div>
-            </div>
+            )}
           </div>
         </div>
+
+        {/* ── Result ── */}
         <div className="calc-result">
           <div className="result-eyebrow">{calc.descAction}</div>
-          <div className="result-title">ยอดรวม{mode==='buy'?'รับซื้อ':'ที่ลูกค้าต้องชำระ'}</div>
-          <div className={`result-amount ${calc.total<=0?'zero':''}`}>
-            <span className="baht-sign">฿</span>{fmt(Math.max(calc.total,0),2)}
-          </div>
-          <div className="result-sub">น้ำหนักทองคำ {fmt(weightBaht,2)} บาท ({fmt(weightBaht*GRAMS_PER_BAHT,2)} กรัม)</div>
-          <button className="btn-show-customer" onClick={() => setShowCustomer(true)}>
-            <span>👁</span> แสดงราคาให้ลูกค้าดู
-          </button>
-          <div className="result-breakdown">
-            <div className="row">
-              <span>ราคาเนื้อทอง ({fmt(weightBaht,2)} × {fmt(calc.pricePerBaht,0)})</span>
-              <span className="v">{fmt(calc.basePrice,2)}</span>
-            </div>
-            {calc.laborFeeNum > 0 && (
-              <div className="row"><span>ค่ากำเหน็จ</span><span className="v" style={{color:'var(--gold)'}}>+ {fmt(calc.laborFeeNum,2)}</span></div>
-            )}
-            {calc.discountNum > 0 && (
-              <div className="row"><span>ส่วนลด</span><span className="v" style={{color:'var(--down)'}}>− {fmt(calc.discountNum,2)}</span></div>
-            )}
-            <div className="row total"><span>รวมสุทธิ</span><span className="v">฿ {fmt(calc.total,2)}</span></div>
-          </div>
+
+          {txMode === 'buy' ? (
+            <>
+              <div className="result-title">ร้านจ่ายให้ลูกค้า</div>
+              <div className={`result-amount ${calc.shopReturns<=0?'zero':''}`}>
+                <span className="baht-sign">฿</span>{fmt(calc.shopReturns, 0)}
+              </div>
+              <div className="result-sub">ราคารับซื้อ {fmt(buyPrice,0)} บาท/บาทน้ำหนัก</div>
+            </>
+          ) : txMode === 'trade' ? (
+            <>
+              <div className="result-title">
+                {calc.customerPays > 0 ? 'ลูกค้าจ่ายเพิ่ม' : calc.shopReturns > 0 ? 'ร้านคืนเงินลูกค้า' : 'ค่าเปลี่ยน'}
+              </div>
+              <div className={`result-amount ${(calc.customerPays+calc.shopReturns)<=0?'zero':''}`}
+                style={{color: calc.shopReturns>0 ? 'var(--up)' : undefined}}>
+                <span className="baht-sign">฿</span>
+                {fmt(calc.customerPays>0 ? calc.customerPays : calc.shopReturns, 0)}
+              </div>
+              <div className="trade-detail">
+                {tradeType !== 'exchange' && (
+                  <>
+                    <div className="tr old">
+                      <span>ทองเก่า {fmt(oldWeightBaht,2)} บ. × {fmt(buyPrice,0)}</span>
+                      <span className="tv">−{fmt(calc.oldValue,0)}</span>
+                    </div>
+                    <div className="tr new">
+                      <span>ทองใหม่ {fmt(weightBaht,2)} บ. × {fmt(sellPrice,0)}</span>
+                      <span className="tv">+{fmt(calc.base,0)}</span>
+                    </div>
+                  </>
+                )}
+                {calc.laborNum > 0 && (
+                  <div className="tr">
+                    <span>{tradeType==='exchange'?'ค่าเปลี่ยน':'ค่ากำเหน็จ'}</span>
+                    <span className="tv">+{fmt(calc.laborNum,0)}</span>
+                  </div>
+                )}
+                <div className="tr sum">
+                  <span>{calc.customerPays>0 ? 'ลูกค้าจ่าย' : 'ร้านคืน'}</span>
+                  <span className="tv" style={{color: calc.customerPays>0?'var(--down)':'var(--up)'}}>
+                    ฿ {fmt(calc.customerPays>0?calc.customerPays:calc.shopReturns, 0)}
+                  </span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="result-title">ยอดรวมที่ลูกค้าต้องชำระ</div>
+              <div className={`result-amount ${calc.total<=0?'zero':''}`}>
+                <span className="baht-sign">฿</span>{fmt(Math.max(calc.total,0),2)}
+              </div>
+              <div className="result-sub">น้ำหนัก {fmt(weightBaht,2)} บาท ({fmt(weightBaht*GRAMS_PER_BAHT,2)} กรัม)</div>
+              <button className="btn-show-customer" onClick={() => setShowCustomer(true)}>
+                <span>👁</span> แสดงราคาให้ลูกค้าดู
+              </button>
+              <div className="result-breakdown">
+                <div className="row">
+                  <span>ราคาเนื้อทอง ({fmt(weightBaht,2)} × {fmt(calc.pricePerBaht,0)})</span>
+                  <span className="v">{fmt(calc.base,2)}</span>
+                </div>
+                {calc.laborNum>0 && <div className="row"><span>ค่ากำเหน็จ</span><span className="v" style={{color:'var(--gold)'}}>+{fmt(calc.laborNum,2)}</span></div>}
+                {discountNum>0 && <div className="row"><span>ส่วนลด</span><span className="v" style={{color:'var(--down)'}}>−{fmt(discountNum,2)}</span></div>}
+                <div className="row total"><span>รวมสุทธิ</span><span className="v">฿ {fmt(calc.total,2)}</span></div>
+              </div>
+            </>
+          )}
+
           {apiOffline && (
-            <div style={{background:'rgba(224,148,120,0.15)',border:'1px solid rgba(224,148,120,0.4)',padding:'10px 14px',fontSize:12,color:'#e09478',letterSpacing:'0.04em',marginTop:24}}>
-              ⚠ ไม่สามารถบันทึกได้ — ราคาไม่ได้มาจากระบบ API<br/>
-              <span style={{fontSize:11,opacity:0.8}}>กรุณารอจนกว่าราคาจะแสดง "ข้อมูลสด" แล้วลองใหม่</span>
+            <div style={{background:'rgba(224,148,120,0.12)',border:'1px solid rgba(224,148,120,0.35)',padding:'10px 14px',fontSize:12,color:'#e09478',marginTop:16,borderRadius:'var(--radius-sm)'}}>
+              ⚠ ราคาไม่ได้มาจาก API · ไม่สามารถบันทึกได้
             </div>
           )}
           <div className="action-row">
             <button className="btn-primary" disabled={!canCommit} onClick={commit}>บันทึก &amp; ออกใบประเมิน</button>
-            <button className="btn-ghost" onClick={() => { setWeight(''); setDiscount('0'); setLaborFee('0'); }}>ล้าง</button>
+            <button className="btn-ghost" onClick={reset}>ล้าง</button>
           </div>
         </div>
       </div>
@@ -1184,12 +1422,12 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
     {showCustomer && (
       <CustomerDisplay
         pricePerBaht={calc.pricePerBaht}
-        laborFeeNum={calc.laborFeeNum}
-        discountNum={calc.discountNum}
-        mode={mode}
+        laborFeeNum={calc.laborNum}
+        discountNum={discountNum}
+        mode={txMode}
         initWeight={unit==='baht' ? weight : '1'}
         onClose={() => setShowCustomer(false)}
-        onWeightChange={(v, u) => { setWeight(v); setUnit(u); setShowCustomer(false); }}
+        onWeightChange={(v,u) => { setWeight(v); setUnit(u); setShowCustomer(false); }}
       />
     )}
     </>

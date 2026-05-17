@@ -443,10 +443,11 @@ function EmployeesTab({ branches }) {
 /* ── Tab: สูตรคำนวณ ── */
 function ConfigsTab({ branches }) {
   const [selBranch, setSelBranch] = useState('');
-  const [vals, setVals] = useState({
-    bar:     { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0 },
-    jewelry: { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0 },
+  const emptyVals = () => ({
+    bar:     { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0, labor_fee_tiers:[], exchange_fee_tiers:[], jewelry_buy_deduct_pct:0 },
+    jewelry: { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0, labor_fee_tiers:[], exchange_fee_tiers:[], jewelry_buy_deduct_pct:2 },
   });
+  const [vals, setVals] = useState(emptyVals);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -458,11 +459,14 @@ function ConfigsTab({ branches }) {
     setMsg(''); setErr('');
     sb.from('branch_configs').select('*').eq('branch_id', selBranch).then(({ data }) => {
       if (!data) return;
-      const next = {
-        bar:     { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0 },
-        jewelry: { labor_fee_min:0, labor_fee_max:0, discount_pct_min:0, discount_pct_max:0, discount_max_baht:0 },
-      };
-      data.forEach(c => { if (next[c.gold_type]) Object.assign(next[c.gold_type], c); });
+      const next = emptyVals();
+      data.forEach(c => {
+        if (next[c.gold_type]) {
+          Object.assign(next[c.gold_type], c);
+          next[c.gold_type].labor_fee_tiers    = c.labor_fee_json    || [];
+          next[c.gold_type].exchange_fee_tiers  = c.exchange_fee_json  || [];
+        }
+      });
       setVals(next);
     });
   }, [selBranch]);
@@ -474,7 +478,12 @@ function ConfigsTab({ branches }) {
     setSaving(true); setMsg(''); setErr('');
     for (const type of ['bar', 'jewelry']) {
       const { error } = await sb.from('branch_configs').upsert(
-        { branch_id: selBranch, gold_type: type, ...vals[type], updated_at: new Date().toISOString() },
+        {
+          branch_id: selBranch, gold_type: type, ...vals[type],
+          labor_fee_json:   vals[type].labor_fee_tiers,
+          exchange_fee_json: vals[type].exchange_fee_tiers,
+          updated_at: new Date().toISOString()
+        },
         { onConflict: 'branch_id,gold_type' }
       );
       if (error) { setErr('บันทึกไม่สำเร็จ: ' + error.message); setSaving(false); return; }
@@ -504,23 +513,58 @@ function ConfigsTab({ branches }) {
           </div>
         </div>
 
-        {['bar','jewelry'].map(type => (
-          <div key={type} style={{marginBottom:28}}>
-            <div style={{
-              fontSize:12,fontWeight:600,color:'var(--gold)',marginBottom:14,paddingBottom:10,
-              borderBottom:'1px solid var(--border)',fontFamily:'var(--mono)',letterSpacing:'0.04em'
-            }}>
-              {typeNames[type]}
+        {['bar','jewelry'].map(type => {
+          const tname = type==='bar'?'ทองคำแท่ง':'ทองรูปพรรณ';
+          const laborTiers = vals[type].labor_fee_tiers || [];
+          const exchangeTiers = vals[type].exchange_fee_tiers || [];
+
+          const setTiers = (kind, newTiers) => setVals(prev => ({
+            ...prev,
+            [type]: { ...prev[type], [`${kind}_fee_tiers`]: newTiers }
+          }));
+
+          const TierRow = ({ kind, tiers }) => (
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:'var(--text-mute)',marginBottom:8,fontFamily:'var(--mono)',textTransform:'uppercase',letterSpacing:'0.06em'}}>
+                {kind==='labor'?'ค่ากำเหน็จตามน้ำหนัก':'ค่าเปลี่ยนตามน้ำหนัก'}
+              </div>
+              {tiers.map((t,i) => (
+                <div key={i} style={{display:'flex',gap:6,marginBottom:6,alignItems:'center'}}>
+                  <span style={{fontSize:11,color:'var(--text-mute)',minWidth:32}}>≤</span>
+                  <div className="num-wrap" style={{width:80}}>
+                    <input type="number" min={0} step={0.5}
+                      value={t.max_weight??''} placeholder="∞ บาท"
+                      onChange={e => {
+                        const arr=[...tiers]; arr[i]={...t,max_weight:e.target.value===''?null:Number(e.target.value)};
+                        setTiers(kind,arr);
+                      }} />
+                  </div>
+                  <span style={{fontSize:11,color:'var(--text-mute)'}}>บาทน้ำหนัก →</span>
+                  <div className="num-wrap" style={{width:90}}>
+                    <input type="number" min={0} step={50} value={t.fee||0}
+                      onChange={e=>{const arr=[...tiers];arr[i]={...t,fee:Number(e.target.value)};setTiers(kind,arr);}} />
+                  </div>
+                  <span style={{fontSize:11,color:'var(--text-mute)'}}>บาท</span>
+                  <button className="btn-ghost btn-sm" onClick={()=>setTiers(kind,tiers.filter((_,j)=>j!==i))}>ลบ</button>
+                </div>
+              ))}
+              <button className="btn-ghost btn-sm" onClick={()=>setTiers(kind,[...tiers,{max_weight:null,fee:0}])}>+ เพิ่ม tier</button>
+              <div style={{fontSize:10,color:'var(--text-mute)',marginTop:4}}>ช่อง "≤" ว่างไว้ = ไม่จำกัด (tier สุดท้าย)</div>
             </div>
-            <div className="form-grid">
-              <NumField label="ค่ากำเหน็จต่ำสุด (บาท)" type={type} field="labor_fee_min" />
-              <NumField label="ค่ากำเหน็จสูงสุด (บาท)" type={type} field="labor_fee_max" />
-              <NumField label="ส่วนลดต่ำสุด (%)" type={type} field="discount_pct_min" />
-              <NumField label="ส่วนลดสูงสุด (%)" type={type} field="discount_pct_max" />
-              <NumField label="ส่วนลดสูงสุด (บาท)" type={type} field="discount_max_baht" />
+          );
+
+          return (
+            <div key={type} style={{marginBottom:28}}>
+              <div style={{fontSize:12,fontWeight:600,color:'var(--gold)',marginBottom:14,paddingBottom:10,borderBottom:'1px solid var(--border)',fontFamily:'var(--mono)'}}>{tname}</div>
+              <div className="form-grid" style={{marginBottom:16}}>
+                <NumField label="ส่วนลดสูงสุด (บาท)" type={type} field="discount_max_baht" />
+                {type==='jewelry' && <NumField label="หักค่าหลอมทองรูปพรรณ (%)" type={type} field="jewelry_buy_deduct_pct" />}
+              </div>
+              <TierRow kind="labor" tiers={laborTiers} />
+              {type==='bar' && <TierRow kind="exchange" tiers={exchangeTiers} />}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <button className="btn-primary" onClick={save} disabled={!selBranch||saving}>
           {saving ? 'กำลังบันทึก...' : 'บันทึกสูตร'}
@@ -603,8 +647,87 @@ function AssessmentsTab({ branches }) {
   );
 }
 
+/* ── Tab: ภาพรวม (Dashboard) ── */
+function DashboardTab({ branches }) {
+  const [rows, setRows] = useState([]);
+  const [filterBranch, setFilterBranch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const modeLabel = { sell:'ขาย', buy:'รับซื้อ', trade:'เปลี่ยน' };
+  const modeColor = { sell:'var(--up)', buy:'var(--down)', trade:'var(--gold)' };
+
+  const load = () => {
+    setLoading(true);
+    const today = new Date(); today.setHours(0,0,0,0);
+    let q = sb.from('assessments')
+      .select('*, branches(name)')
+      .gte('created_at', today.toISOString())
+      .order('created_at', { ascending: false });
+    if (filterBranch) q = q.eq('branch_id', filterBranch);
+    q.then(({ data }) => { setRows(data || []); setLoading(false); });
+  };
+  useEffect(() => { load(); }, [filterBranch]);
+
+  const sellTotal  = rows.filter(r=>r.mode==='sell'||r.mode==='trade').reduce((s,r)=>s+Number(r.total||0),0);
+  const buyTotal   = rows.filter(r=>r.mode==='buy').reduce((s,r)=>s+Number(r.total||0),0);
+  const grandTotal = rows.reduce((s,r)=>s+Number(r.total||0),0);
+
+  const StatBox = ({ label, val, color }) => (
+    <div style={{flex:1,background:color?`rgba(${color},0.08)`:'var(--bg-3)',border:`1px solid rgba(${color||'0,0,0'},0.15)`,borderRadius:'var(--radius-sm)',padding:16,textAlign:'center'}}>
+      <div style={{fontSize:11,color:'var(--text-mute)',marginBottom:6,fontFamily:'var(--mono)'}}>{label}</div>
+      <div style={{fontSize:22,fontWeight:700,color:color?`rgb(${color})`:'var(--text)',fontFamily:'var(--mono)'}}>{fmtNum(val)}</div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="card">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>
+          <div className="card-title" style={{marginBottom:0}}>ยอดรวมวันนี้</div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <button className="btn-ghost btn-sm" onClick={load}>↻ รีเฟรช</button>
+            <div className="f-input" style={{minWidth:160}}>
+              <select value={filterBranch} onChange={e=>setFilterBranch(e.target.value)}>
+                <option value="">ทุกสาขา</option>
+                {branches.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:10,marginBottom:20,flexWrap:'wrap'}}>
+          <StatBox label={`รายการทั้งหมด (${rows.length})`} val={grandTotal} />
+          <StatBox label="ยอดขาย / เปลี่ยน" val={sellTotal} color="52,199,89" />
+          <StatBox label="ยอดรับซื้อ" val={buyTotal} color="255,59,48" />
+        </div>
+        {loading ? <div className="spinner">กำลังโหลด...</div> : rows.length===0 ? (
+          <div style={{color:'var(--text-mute)',fontSize:13,padding:'20px 0',fontFamily:'var(--mono)'}}>ยังไม่มีรายการวันนี้</div>
+        ) : (
+          <div style={{overflowX:'auto'}}>
+            <table>
+              <thead><tr><th>เวลา</th><th>รหัส</th><th>สาขา</th><th>ประเภท</th><th>น้ำหนัก</th><th style={{textAlign:'right'}}>ยอด (บาท)</th></tr></thead>
+              <tbody>{rows.map(r => {
+                const d = new Date(r.created_at);
+                const hhmm = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                return (
+                  <tr key={r.id}>
+                    <td style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--text-mute)'}}>{hhmm}</td>
+                    <td className="mono" style={{fontSize:11}}>{r.ref_code}</td>
+                    <td style={{color:'var(--text-dim)'}}>{r.branches?.name??'—'}</td>
+                    <td><span className="badge" style={{background:`rgba(${r.mode==='sell'?'52,199,89':r.mode==='buy'?'255,59,48':'176,125,15'},0.12)`,color:modeColor[r.mode]||'var(--text-mute)'}}>{modeLabel[r.mode]||r.mode}</span></td>
+                    <td style={{fontFamily:'var(--mono)',fontSize:12}}>{r.weight_baht} บ.</td>
+                    <td style={{fontFamily:'var(--mono)',textAlign:'right',color:'var(--text)',fontWeight:600}}>{fmtNum(r.total)}</td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── App ── */
-const TABS = ['สาขา', 'พนักงาน', 'สูตรคำนวณ', 'ประวัติ'];
+const TABS = ['ภาพรวม', 'สาขา', 'พนักงาน', 'สูตรคำนวณ', 'ประวัติ'];
 
 function AdminApp() {
   const [session, setSession] = useState(null);
@@ -650,10 +773,11 @@ function AdminApp() {
       </div>
 
       <div className="content">
-        {tab === 0 && <BranchesTab />}
-        {tab === 1 && <EmployeesTab branches={branches} />}
-        {tab === 2 && <ConfigsTab branches={branches} />}
-        {tab === 3 && <AssessmentsTab branches={branches} />}
+        {tab === 0 && <DashboardTab branches={branches} />}
+        {tab === 1 && <BranchesTab />}
+        {tab === 2 && <EmployeesTab branches={branches} />}
+        {tab === 3 && <ConfigsTab branches={branches} />}
+        {tab === 4 && <AssessmentsTab branches={branches} />}
       </div>
     </div>
   );
