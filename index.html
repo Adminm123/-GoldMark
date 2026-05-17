@@ -1138,45 +1138,120 @@ function seedHistory() {
   ];
 }
 
-/* ── Live price hook (Hua Seng Heng API) ── */
-const HSH_API = 'https://apicheckpricev3.huasengheng.com/api/values/getprice/';
-const REFRESH_MS = 5 * 60 * 1000; // 5 minutes
+/* ── Live price — Supabase cache + Realtime + smart fetch ── *
+ *
+ * Architecture (multi-branch friendly):
+ *   • ราคาเก็บใน Supabase gold_prices (1 แถว)
+ *   • client อ่านจาก Supabase ก่อน (เร็ว, ไม่กด HSH)
+ *   • Supabase Realtime push ให้ทุก tab/สาขาทันที
+ *   • ทุก 60 วิ: client 1 คน "ชนะ" atomic DB function
+ *     → ดึง HSH → เขียน Supabase → Realtime แจ้งทุกคน
+ *   • ผล: HSH โดนเรียก 1 ครั้ง/นาที ไม่ว่าจะมีกี่สาขา
+ */
+const HSH_API    = 'https://apicheckpricev3.huasengheng.com/api/values/getprice/';
+const PRICE_TABLE = 'gold_prices';
+const STALE_MS   = 55_000;   // cache เก่ากว่านี้ถือว่า stale
+const JITTER_MAX = 8_000;    // random delay สูงสุด (ms) กันทุกคนยิงพร้อมกัน
+
+async function hshFetch() {
+  const res = await fetch(HSH_API, { headers: { Accept: 'application/json' } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const d = (await res.json()).find(x => x.GoldType === 'REF' && x.GoldCode === '96.50');
+  if (!d) throw new Error('ไม่พบข้อมูล 96.50%');
+  return {
+    buy:         Number(String(d.Buy).replace(/,/g,'')),
+    sell:        Number(String(d.Sell).replace(/,/g,'')),
+    buy_change:  Number(String(d.BuyChange  || 0).replace(/,/g,'')),
+    sell_change: Number(String(d.SellChange || 0).replace(/,/g,'')),
+    str_time:    d.StrTimeUpdate || '',
+  };
+}
 
 function useGoldPrice(fallbackBuy, fallbackSell) {
-  const [live, setLive] = useState(null);   // { buy, sell, buyChange, sellChange, strTime }
-  const [status, setStatus] = useState('loading'); // loading | ok | error
+  const [live, setLive] = useState(null);
+  const [status, setStatus] = useState('loading');
 
-  const fetchPrice = useCallback(async () => {
-    try {
-      const res = await fetch(HSH_API, { headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const d = json.find(x => x.GoldType === 'REF' && x.GoldCode === '96.50');
-      if (!d) throw new Error('ไม่พบข้อมูล 96.50%');
-      setLive({
-        buy:        Number(String(d.Buy).replace(/,/g, '')),
-        sell:       Number(String(d.Sell).replace(/,/g, '')),
-        buyChange:  Number(String(d.BuyChange  || 0).replace(/,/g, '')),
-        sellChange: Number(String(d.SellChange || 0).replace(/,/g, '')),
-        strTime:    d.StrTimeUpdate || '',
-      });
-      setStatus('ok');
-    } catch (err) {
-      console.warn('HSH API error:', err.message);
-      setStatus('error');
-    }
+  const applyRow = useCallback((row) => {
+    if (!row || !row.sell) return;
+    setLive({ buy: row.buy, sell: row.sell, buyChange: row.buy_change, sellChange: row.sell_change, strTime: row.str_time });
+    setStatus('ok');
   }, []);
 
+  /* เขียน Supabase ผ่าน atomic function: จะ UPDATE จริงแค่เมื่อ cache เก่า
+     → ถ้า 2 client เรียกพร้อมกัน คนแรกเขียน คนหลัง no-op */
+  const pushPrice = useCallback(async (data) => {
+    await sb.rpc('update_gold_price_if_stale', {
+      p_buy: data.buy, p_sell: data.sell,
+      p_buy_change: data.buy_change, p_sell_change: data.sell_change,
+      p_str_time: data.str_time,
+    });
+  }, []);
+
+  /* กด refresh ด้วยมือ — ข้าม stale check, ดึง HSH เลย */
+  const forceRefresh = useCallback(async () => {
+    setStatus('loading');
+    try {
+      const data = await hshFetch();
+      await sb.from(PRICE_TABLE).upsert({ id: 1, ...data, updated_at: new Date().toISOString() });
+      applyRow({ ...data, buy_change: data.buy_change, sell_change: data.sell_change });
+    } catch (e) {
+      console.warn('Refresh error:', e);
+      setStatus('error');
+    }
+  }, [applyRow]);
+
   useEffect(() => {
-    fetchPrice();
-    const id = setInterval(fetchPrice, REFRESH_MS);
-    return () => clearInterval(id);
-  }, [fetchPrice]);
+    let dead = false;
+
+    (async () => {
+      /* 1. อ่าน cache จาก Supabase ก่อน (แสดงราคาทันทีถ้ามี) */
+      try {
+        const { data: cached } = await sb.from(PRICE_TABLE).select('*').eq('id', 1).maybeSingle();
+        if (dead) return;
+        let stale = true;
+        if (cached && cached.sell > 0) {
+          applyRow(cached);
+          stale = Date.now() - new Date(cached.updated_at).getTime() >= STALE_MS;
+        }
+
+        /* 2. Cache เก่า → wait jitter → ดึง HSH (atomic: แค่คนเดียวเขียน) */
+        if (stale) {
+          await new Promise(r => setTimeout(r, Math.random() * JITTER_MAX));
+          if (dead) return;
+          const data = await hshFetch();
+          if (!dead) { applyRow({ ...data, buy_change: data.buy_change, sell_change: data.sell_change }); await pushPrice(data); }
+        }
+      } catch (e) {
+        console.warn('Init price error:', e.message);
+        if (!dead) setStatus('error');
+      }
+    })();
+
+    /* 3. Supabase Realtime — ทุก tab / สาขา ได้รับทันทีเมื่อใครก็ตามเขียน */
+    const ch = sb.channel('gold_rt')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: PRICE_TABLE },
+        ({ new: row }) => { if (!dead) applyRow(row); })
+      .subscribe();
+
+    /* 4. ทุก 60 วิ: ลอง push ราคาใหม่ (atomic fn กันเขียนซ้ำ)
+          → Realtime จะ notify ทุกคน, HSH โดนเรียกแค่ 1 ครั้ง */
+    const timer = setInterval(async () => {
+      if (dead) return;
+      try {
+        await new Promise(r => setTimeout(r, Math.random() * JITTER_MAX));
+        if (dead) return;
+        const data = await hshFetch();
+        if (!dead) { applyRow({ ...data, buy_change: data.buy_change, sell_change: data.sell_change }); await pushPrice(data); }
+      } catch (e) { console.warn('Interval price error:', e.message); }
+    }, 60_000);
+
+    return () => { dead = true; clearInterval(timer); sb.removeChannel(ch); };
+  }, [applyRow, pushPrice]);
 
   const buy  = live ? live.buy  : fallbackBuy;
   const sell = live ? live.sell : fallbackSell;
   const delta = live ? live.sellChange : 0;
-  return { buy, sell, delta, strTime: live?.strTime ?? '', status, refresh: fetchPrice };
+  return { buy, sell, delta, strTime: live?.strTime ?? '', status, refresh: forceRefresh };
 }
 
 /* ── App ── */
