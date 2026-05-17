@@ -225,11 +225,11 @@ a { color: var(--gold-bright); text-decoration: none; }
   font-family: var(--mono); font-size: 26px; padding: 12px 16px; outline: none; font-weight: 500; min-width: 0;
 }
 .weight-input input::placeholder { color: var(--text-mute); }
-.weight-input .unit-pick { display: flex; border-left: 1px solid var(--border); }
+.weight-input .unit-pick { display: flex; border-left: 1px solid var(--border); flex-shrink: 0; }
 .weight-input .unit-pick button {
-  background: transparent; border: none; color: var(--text-mute); padding: 0 12px;
-  font-size: 12px; border-right: 1px solid var(--border); font-family: var(--mono);
-  transition: all 0.15s; min-width: 52px;
+  flex: 1; background: transparent; border: none; color: var(--text-mute);
+  padding: 0 10px; font-size: 12px; border-right: 1px solid var(--border);
+  font-family: var(--mono); transition: all 0.15s; white-space: nowrap; min-width: 0;
 }
 .weight-input .unit-pick button:last-child { border-right: none; }
 .weight-input .unit-pick button.active { background: rgba(245,197,66,0.12); color: var(--gold); }
@@ -257,8 +257,9 @@ a { color: var(--gold-bright); text-decoration: none; }
 .result-amount.zero { background: none; -webkit-text-fill-color: var(--text-mute); animation: none; }
 .result-sub { font-size: 12px; color: var(--text-mute); margin-bottom: 24px; font-family: var(--mono); }
 .result-breakdown { border-top: 1px solid var(--border); padding-top: 16px; display: grid; gap: 8px; font-size: 13px; }
-.result-breakdown .row { display: flex; justify-content: space-between; align-items: baseline; color: var(--text-dim); }
-.result-breakdown .row .v { font-family: var(--mono); color: var(--text); }
+.result-breakdown .row { display: flex; justify-content: space-between; align-items: baseline; color: var(--text-dim); gap: 8px; }
+.result-breakdown .row > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-breakdown .row .v { font-family: var(--mono); color: var(--text); flex-shrink: 0; }
 .result-breakdown .row.total { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; font-size: 14px; }
 .result-breakdown .row.total .v { color: var(--gold); font-size: 17px; font-weight: 600; }
 .action-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 24px; }
@@ -426,7 +427,7 @@ a { color: var(--gold-bright); text-decoration: none; }
   .header-meta .value { font-size: 11px; }
 
   /* Page */
-  .page { padding: 0 12px 56px; }
+  .page { padding: 0 10px 56px; }
   .section-head { margin-top: 20px; margin-bottom: 10px; }
   .section-head .index { display: none; }
   .section-head h2 { font-size: 15px; }
@@ -439,38 +440,78 @@ a { color: var(--gold-bright); text-decoration: none; }
   .price-row { gap: 12px; padding-top: 12px; }
   .price-row::before { display: none; }
   .price-row .col .label { font-size: 10px; margin-bottom: 4px; }
-  .price-row .col .value { font-size: 26px; }
+  .price-row .col .value { font-size: 28px; }
   .price-row .col .unit { font-size: 10px; margin-top: 3px; }
   .delta { top: 10px; right: 10px; font-size: 10px; padding: 2px 7px; }
 
   /* Chart */
   .chart-card { padding: 12px 12px 10px; }
   .chart-title { font-size: 12px; }
-  .chart-controls button { padding: 3px 9px; font-size: 11px; }
+  .chart-controls button { padding: 3px 8px; font-size: 11px; }
   .chart-svg { height: 130px; }
   .chart-stats { gap: 8px; font-size: 10px; }
 
-  /* Calculator */
-  .calc-form, .calc-result { padding: 14px 12px; }
-  .field-group { gap: 13px; }
-  .field label { font-size: 10px; margin-bottom: 4px; }
-  .seg button { padding: 10px 6px; font-size: 12px; min-height: 44px; }
-  .weight-input input { font-size: 22px; padding: 10px 12px; }
-  .weight-input .unit-pick button { padding: 0 9px; min-width: 44px; font-size: 11px; }
-  .extra-grid { grid-template-columns: 1fr; gap: 10px; }
-  .simple-input input { font-size: 15px; padding: 11px 12px; }
+  /* ── Calculator — mobile layout ── */
+  .calc-layout { gap: 8px; }
+  .calc-form { padding: 16px 14px; }
+  .field-group { gap: 14px; }
+  .field label { font-size: 10px; margin-bottom: 5px; }
+  .field label .th { font-size: 13px; }
 
-  /* Result */
+  /* ประเภทรายการ buttons */
+  .seg button { padding: 11px 4px; font-size: 13px; min-height: 46px; }
+
+  /* น้ำหนัก input */
+  .weight-input { border-radius: var(--radius-sm); }
+  .weight-input input { font-size: 28px; padding: 10px 14px; }
+  .weight-input .unit-pick button { font-size: 12px; padding: 0 6px; }
+
+  /* ค่ากำเหน็จ / ส่วนลด — stack 1 col */
+  .extra-grid { grid-template-columns: 1fr; gap: 10px; }
+  .simple-input input { font-size: 18px; padding: 12px 12px; }
+
+  /* ── Result panel — ลูกค้าเห็น ── */
+  .calc-result { padding: 20px 16px; }
+
+  /* ยอดรวม: ใช้สีทึบแทน gradient clip (render ถูกต้องบน iOS/Android ทุกรุ่น) */
+  .result-amount {
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    -webkit-text-fill-color: var(--gold);
+    animation: none;
+    font-size: clamp(32px, 9vw, 44px);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 8px 0 6px;
+  }
+  .result-amount.zero { -webkit-text-fill-color: var(--text-mute); }
+  .result-amount .baht-sign {
+    -webkit-text-fill-color: var(--gold-soft);
+    font-family: var(--mono);
+    font-size: clamp(20px, 5.5vw, 26px);
+    position: static;
+    top: 0;
+    vertical-align: baseline;
+    margin-right: 4px;
+  }
+
   .result-eyebrow { font-size: 10px; }
-  .result-title { font-size: 14px; margin-bottom: 12px; }
-  .result-amount { font-size: 34px; margin: 10px 0 4px; }
-  .result-amount .baht-sign { font-size: 17px; top: 8px; margin-right: 6px; }
-  .result-sub { font-size: 11px; margin-bottom: 16px; }
-  .result-breakdown { gap: 6px; font-size: 12px; }
-  .result-breakdown .row.total .v { font-size: 15px; }
-  .action-row { gap: 8px; margin-top: 14px; }
-  /* touch-friendly: ปุ่มสูง 48px */
-  .btn-primary, .btn-ghost { padding: 14px 16px; font-size: 14px; min-height: 48px; }
+  .result-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--text-dim); }
+  .result-sub { font-size: 11px; margin-bottom: 16px; margin-top: 4px; }
+
+  /* Breakdown rows: ตัดข้อความยาวด้วย ellipsis */
+  .result-breakdown { gap: 7px; font-size: 12px; padding-top: 14px; }
+  .result-breakdown .row > span:first-child { font-size: 12px; }
+  .result-breakdown .row .v { font-size: 13px; }
+  .result-breakdown .row.total { padding-top: 10px; margin-top: 2px; }
+  .result-breakdown .row.total > span:first-child { font-size: 13px; font-weight: 600; white-space: normal; }
+  .result-breakdown .row.total .v { font-size: 16px; }
+
+  /* Action buttons — full width, thumb-friendly */
+  .action-row { grid-template-columns: 1fr; gap: 8px; margin-top: 18px; }
+  .btn-primary { padding: 15px 16px; font-size: 15px; min-height: 52px; }
+  .btn-ghost { padding: 13px 16px; font-size: 14px; min-height: 48px; }
 
   /* History search */
   .seg-4 button { font-size: 11px; padding: 9px 4px; min-height: 40px; }
@@ -489,31 +530,30 @@ a { color: var(--gold-bright); text-decoration: none; }
   .history-table tr:first-child { border-top: none; }
   .history-table td { border: none; padding: 1px 0; }
   .history-table .code { font-size: 11px; color: var(--text-mute); }
-  .history-table .amount {
-    text-align: left; font-size: 20px; font-weight: 600;
-    padding-top: 4px; color: var(--text);
-  }
+  .history-table .amount { text-align: left; font-size: 20px; font-weight: 600; padding-top: 4px; color: var(--text); }
   .history-table td.actions { padding-top: 8px; }
-  .history-table .icon-btn { padding: 7px 12px; font-size: 12px; min-height: 36px; }
+  .history-table .icon-btn { padding: 8px 14px; font-size: 12px; min-height: 38px; }
 
   /* Receipt */
-  .receipt { padding: 22px 14px; }
+  .receipt { padding: 22px 16px; }
   .receipt-mark { font-size: 22px; }
   .receipt-shop { font-size: 14px; }
   .receipt-body { font-size: 12px; }
-  .receipt-total .v { font-size: 19px; }
+  .receipt-total .v { font-size: 20px; }
   .receipt-code { font-size: 12px; padding: 4px 10px; }
   .receipt-qr { padding: 10px; gap: 10px; }
-  .receipt-actions button { width: 100%; padding: 13px; }
+  .receipt-actions button { width: 100%; padding: 13px; min-height: 48px; }
 
   .site-foot { padding: 16px 12px; font-size: 10px; }
 }
 
 /* ── Very small phone (≤ 360px) ── */
 @media (max-width: 360px) {
-  .price-row .col .value { font-size: 22px; }
-  .result-amount { font-size: 30px; }
-  .weight-input input { font-size: 20px; }
+  .page { padding: 0 8px 48px; }
+  .price-row .col .value { font-size: 24px; }
+  .weight-input input { font-size: 24px; }
+  .simple-input input { font-size: 16px; }
+  .result-amount { font-size: 28px; }
   .header-meta { display: none; }
 }
 
