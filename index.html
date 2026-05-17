@@ -201,7 +201,7 @@ a { color: var(--gold-bright); text-decoration: none; }
   padding: 28px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 2px 16px rgba(0,0,0,0.3);
 }
-.calc-result { background: rgba(58,58,60,0.7); }
+.calc-result { background: rgba(248, 245, 240, 0.95); }
 .field-group { display: grid; gap: 18px; }
 .field label {
   display: block; font-size: 11px; color: var(--text-mute);
@@ -368,36 +368,155 @@ a { color: var(--gold-bright); text-decoration: none; }
 /* Footer */
 .site-foot { border-top: 1px solid var(--border); margin-top: 60px; padding: 24px; text-align: center; font-size: 11px; color: var(--text-mute); }
 
-/* Responsive */
-@media (max-width: 880px) {
-  .site-header .inner { padding: 0 16px; }
-  .page { padding: 0 16px 60px; }
-  .section-head { margin-top: 30px; }
-  .section-head h2 { font-size: 15px; }
-  .price-card { padding: 24px 20px; }
-  .price-row .col .value { font-size: 28px; }
-  .price-row { gap: 20px; }
-  .delta { top: 20px; right: 20px; font-size: 11px; padding: 3px 8px; }
+/* ════════════════════════════════════════
+   Responsive — Mobile / Tablet
+   ════════════════════════════════════════ */
+
+/* ── Tablet landscape & small desktop (≤ 900px) ── */
+@media (max-width: 900px) {
+  .page { padding: 0 20px 64px; }
+  .section-head { margin-top: 28px; }
+  .section-head .meta { display: none; }
+  .price-row .col .value { font-size: 32px; }
+  .delta { top: 18px; right: 18px; }
+  .chart-svg { height: 170px; }
   .calc-layout { grid-template-columns: 1fr; }
-  .calc-form, .calc-result { padding: 20px 18px; }
-  .result-amount { font-size: 36px; }
-  .result-amount .baht-sign { font-size: 18px; top: 8px; }
-  .weight-input input { font-size: 20px; }
+  .calc-form, .calc-result { padding: 22px 20px; }
+  .result-amount { font-size: 42px; }
   .action-row { grid-template-columns: 1fr; }
-  .extra-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Tablet portrait & large phone (≤ 768px) ── */
+@media (max-width: 768px) {
+  .site-header .inner { padding: 0 16px; }
+  .page { padding: 0 14px 60px; }
+  .section-head { margin-top: 24px; margin-bottom: 12px; padding-bottom: 10px; }
+  .section-head h2 { font-size: 16px; }
+
+  .price-card { padding: 20px 16px; }
+  .price-card .type-th { font-size: 18px; margin-bottom: 16px; }
+  .price-row { gap: 16px; padding-top: 16px; }
+  .price-row .col .value { font-size: 28px; }
+
+  .chart-card { padding: 16px 16px 12px; }
+  .chart-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .chart-svg { height: 150px; }
+  .chart-stats { gap: 12px; }
+
+  .calc-form, .calc-result { padding: 18px 16px; }
+  .field-group { gap: 15px; }
+  .result-amount { font-size: 38px; }
+  .result-amount .baht-sign { font-size: 19px; top: 9px; }
+
+  .history-search { flex-direction: column; gap: 8px; }
+  .history-search .search-input { min-width: unset; }
+
   .receipt { padding: 28px 20px; }
+  .receipt-actions { flex-direction: column; }
+  .receipt-actions button { text-align: center; padding: 13px; }
 }
-@media (max-width: 540px) {
+
+/* ── Mobile phone (≤ 480px) ── */
+@media (max-width: 480px) {
+  /* Header */
+  .site-header { height: 48px; }
+  .site-header .inner { padding: 0 14px; gap: 10px; }
+  .brand-text .name-th { font-size: 13px; }
+  .header-meta .label { display: none; }
+  .header-meta .value { font-size: 11px; }
+
+  /* Page */
+  .page { padding: 0 12px 56px; }
+  .section-head { margin-top: 20px; margin-bottom: 10px; }
+  .section-head .index { display: none; }
+  .section-head h2 { font-size: 15px; }
+
+  /* Price card */
+  .price-card { padding: 14px 14px 16px; }
+  .price-card .type-label { font-size: 10px; }
+  .price-card .type-th { font-size: 16px; margin-bottom: 12px; }
+  .price-card .purity { font-size: 9px; padding: 1px 5px; }
+  .price-row { gap: 12px; padding-top: 12px; }
+  .price-row::before { display: none; }
+  .price-row .col .label { font-size: 10px; margin-bottom: 4px; }
+  .price-row .col .value { font-size: 26px; }
+  .price-row .col .unit { font-size: 10px; margin-top: 3px; }
+  .delta { top: 10px; right: 10px; font-size: 10px; padding: 2px 7px; }
+
+  /* Chart */
+  .chart-card { padding: 12px 12px 10px; }
+  .chart-title { font-size: 12px; }
+  .chart-controls button { padding: 3px 9px; font-size: 11px; }
+  .chart-svg { height: 130px; }
+  .chart-stats { gap: 8px; font-size: 10px; }
+
+  /* Calculator */
+  .calc-form, .calc-result { padding: 14px 12px; }
+  .field-group { gap: 13px; }
+  .field label { font-size: 10px; margin-bottom: 4px; }
+  .seg button { padding: 10px 6px; font-size: 12px; min-height: 44px; }
+  .weight-input input { font-size: 22px; padding: 10px 12px; }
+  .weight-input .unit-pick button { padding: 0 9px; min-width: 44px; font-size: 11px; }
+  .extra-grid { grid-template-columns: 1fr; gap: 10px; }
+  .simple-input input { font-size: 15px; padding: 11px 12px; }
+
+  /* Result */
+  .result-eyebrow { font-size: 10px; }
+  .result-title { font-size: 14px; margin-bottom: 12px; }
+  .result-amount { font-size: 34px; margin: 10px 0 4px; }
+  .result-amount .baht-sign { font-size: 17px; top: 8px; margin-right: 6px; }
+  .result-sub { font-size: 11px; margin-bottom: 16px; }
+  .result-breakdown { gap: 6px; font-size: 12px; }
+  .result-breakdown .row.total .v { font-size: 15px; }
+  .action-row { gap: 8px; margin-top: 14px; }
+  /* touch-friendly: ปุ่มสูง 48px */
+  .btn-primary, .btn-ghost { padding: 14px 16px; font-size: 14px; min-height: 48px; }
+
+  /* History search */
+  .seg-4 button { font-size: 11px; padding: 9px 4px; min-height: 40px; }
+
+  /* History table → card list */
+  .history-table { border-radius: var(--radius); }
   .history-table thead { display: none; }
-  .history-table, .history-table tbody, .history-table tr, .history-table td { display: block; width: 100%; }
-  .history-table tr { padding: 12px; border-top: 1px solid var(--border); }
-  .history-table td { border: none; padding: 3px 0; }
-  .history-table td.amount { text-align: left; font-size: 17px; padding-top: 6px; }
-  .history-table td.actions { padding-top: 10px; }
-  .price-row { grid-template-columns: 1fr; gap: 12px; }
-  .price-row .col { padding-top: 12px; border-top: 1px solid var(--border); }
-  .price-row .col:first-child { padding-top: 0; border-top: none; }
+  .history-table,
+  .history-table tbody,
+  .history-table tr,
+  .history-table td { display: block; width: 100%; }
+  .history-table tr {
+    padding: 12px 14px 10px; border: none;
+    border-top: 1px solid var(--border); position: relative;
+  }
+  .history-table tr:first-child { border-top: none; }
+  .history-table td { border: none; padding: 1px 0; }
+  .history-table .code { font-size: 11px; color: var(--text-mute); }
+  .history-table .amount {
+    text-align: left; font-size: 20px; font-weight: 600;
+    padding-top: 4px; color: var(--text);
+  }
+  .history-table td.actions { padding-top: 8px; }
+  .history-table .icon-btn { padding: 7px 12px; font-size: 12px; min-height: 36px; }
+
+  /* Receipt */
+  .receipt { padding: 22px 14px; }
+  .receipt-mark { font-size: 22px; }
+  .receipt-shop { font-size: 14px; }
+  .receipt-body { font-size: 12px; }
+  .receipt-total .v { font-size: 19px; }
+  .receipt-code { font-size: 12px; padding: 4px 10px; }
+  .receipt-qr { padding: 10px; gap: 10px; }
+  .receipt-actions button { width: 100%; padding: 13px; }
+
+  .site-foot { padding: 16px 12px; font-size: 10px; }
 }
+
+/* ── Very small phone (≤ 360px) ── */
+@media (max-width: 360px) {
+  .price-row .col .value { font-size: 22px; }
+  .result-amount { font-size: 30px; }
+  .weight-input input { font-size: 20px; }
+  .header-meta { display: none; }
+}
+
 @media print {
   .site-header, .prices, .chart-card, .calc-layout, .history-section, .site-foot { display: none !important; }
   .receipt-backdrop { position: static; background: white; backdrop-filter: none; padding: 0; }
