@@ -373,7 +373,11 @@ a { color: var(--gold-bright); text-decoration: none; }
    Responsive — Mobile / Tablet
    ════════════════════════════════════════ */
 
-/* ── Tablet landscape & small desktop (≤ 900px) ── */
+/* ป้องกัน horizontal overflow จากทุก element */
+body { overflow-x: hidden; }
+.page { overflow-x: hidden; }
+
+/* ── Tablet landscape (≤ 900px) ── */
 @media (max-width: 900px) {
   .page { padding: 0 20px 64px; }
   .section-head { margin-top: 28px; }
@@ -382,178 +386,194 @@ a { color: var(--gold-bright); text-decoration: none; }
   .delta { top: 18px; right: 18px; }
   .chart-svg { height: 170px; }
   .calc-layout { grid-template-columns: 1fr; }
-  .calc-form, .calc-result { padding: 22px 20px; }
-  .result-amount { font-size: 42px; }
+  .calc-form, .calc-result { padding: 24px; }
+  .result-amount { font-size: 44px; }
   .action-row { grid-template-columns: 1fr; }
 }
 
-/* ── Tablet portrait & large phone (≤ 768px) ── */
+/* ── Tablet portrait (≤ 768px) ── */
 @media (max-width: 768px) {
   .site-header .inner { padding: 0 16px; }
-  .page { padding: 0 14px 60px; }
-  .section-head { margin-top: 24px; margin-bottom: 12px; padding-bottom: 10px; }
+  .page { padding: 0 12px 60px; }
+  .section-head { margin-top: 24px; margin-bottom: 12px; }
   .section-head h2 { font-size: 16px; }
-
   .price-card { padding: 20px 16px; }
-  .price-card .type-th { font-size: 18px; margin-bottom: 16px; }
-  .price-row { gap: 16px; padding-top: 16px; }
-  .price-row .col .value { font-size: 28px; }
-
-  .chart-card { padding: 16px 16px 12px; }
-  .chart-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .price-card .type-th { font-size: 18px; }
+  .price-row .col .value { font-size: 26px; }
+  .chart-card { padding: 16px 14px 12px; }
+  .chart-header { flex-direction: column; gap: 8px; align-items: flex-start; }
   .chart-svg { height: 150px; }
-  .chart-stats { gap: 12px; }
-
-  .calc-form, .calc-result { padding: 18px 16px; }
-  .field-group { gap: 15px; }
+  .calc-form, .calc-result { padding: 20px 18px; }
   .result-amount { font-size: 38px; }
-  .result-amount .baht-sign { font-size: 19px; top: 9px; }
-
   .history-search { flex-direction: column; gap: 8px; }
-  .history-search .search-input { min-width: unset; }
-
-  .receipt { padding: 28px 20px; }
+  .history-search .search-input { min-width: 0; }
   .receipt-actions { flex-direction: column; }
-  .receipt-actions button { text-align: center; padding: 13px; }
+  .receipt-actions button { padding: 13px; }
 }
 
-/* ── Mobile phone (≤ 480px) ── */
+/* ══════════════════════════════════════════════════
+   Mobile phone (≤ 480px) — redesign สำหรับมือถือ
+   ══════════════════════════════════════════════════ */
 @media (max-width: 480px) {
-  /* Header */
+
+  /* ─ Header ─ */
   .site-header { height: 48px; }
-  .site-header .inner { padding: 0 14px; gap: 10px; }
+  .site-header .inner { padding: 0 14px; }
   .brand-text .name-th { font-size: 13px; }
   .header-meta .label { display: none; }
   .header-meta .value { font-size: 11px; }
 
-  /* Page */
-  .page { padding: 0 10px 56px; }
-  .section-head { margin-top: 20px; margin-bottom: 10px; }
+  /* ─ Page ─ */
+  .page { padding: 0 12px 60px; }
+  .section-head { margin-top: 20px; margin-bottom: 10px; padding-bottom: 10px; }
   .section-head .index { display: none; }
   .section-head h2 { font-size: 15px; }
 
-  /* Price card */
-  .price-card { padding: 14px 14px 16px; }
+  /* ─ ราคาทอง ─ */
+  .price-card { padding: 16px; }
   .price-card .type-label { font-size: 10px; }
-  .price-card .type-th { font-size: 16px; margin-bottom: 12px; }
-  .price-card .purity { font-size: 9px; padding: 1px 5px; }
-  .price-row { gap: 12px; padding-top: 12px; }
+  .price-card .type-th { font-size: 16px; margin-bottom: 14px; }
+  .price-card .purity { font-size: 9px; }
+  .price-row { gap: 0; padding-top: 14px; }
   .price-row::before { display: none; }
+  .price-row .col { padding: 0 8px; flex: 1; }
+  .price-row .col:first-child { padding-left: 0; border-right: 1px solid var(--border); }
+  .price-row .col:last-child  { padding-right: 0; }
   .price-row .col .label { font-size: 10px; margin-bottom: 4px; }
-  .price-row .col .value { font-size: 28px; }
-  .price-row .col .unit { font-size: 10px; margin-top: 3px; }
+  .price-row .col .value { font-size: 26px; }
+  .price-row .col .unit { font-size: 10px; margin-top: 2px; }
   .delta { top: 10px; right: 10px; font-size: 10px; padding: 2px 7px; }
 
-  /* Chart */
+  /* ─ Chart ─ */
   .chart-card { padding: 12px 12px 10px; }
   .chart-title { font-size: 12px; }
-  .chart-controls button { padding: 3px 8px; font-size: 11px; }
-  .chart-svg { height: 130px; }
+  .chart-controls button { padding: 4px 8px; font-size: 11px; }
+  .chart-svg { height: 120px; }
   .chart-stats { gap: 8px; font-size: 10px; }
 
-  /* ── Calculator — mobile layout ── */
-  .calc-layout { gap: 8px; }
-  .calc-form { padding: 16px 14px; }
-  .field-group { gap: 14px; }
-  .field label { font-size: 10px; margin-bottom: 5px; }
-  .field label .th { font-size: 13px; }
+  /* ══ Calculator ══ */
+  .calc-layout { gap: 10px; }
 
-  /* ประเภทรายการ buttons */
-  .seg button { padding: 11px 4px; font-size: 13px; min-height: 46px; }
+  /* Form card */
+  .calc-form { padding: 16px; }
+  .field-group { gap: 16px; }
+  .field label { font-size: 11px; margin-bottom: 6px; }
+  .field label .th { font-size: 14px; }
 
-  /* น้ำหนัก input */
-  .weight-input { border-radius: var(--radius-sm); }
-  .weight-input input { font-size: 28px; padding: 10px 14px; }
-  .weight-input .unit-pick button { font-size: 12px; padding: 0 6px; }
+  /* ประเภทรายการ — ปุ่มใหญ่ */
+  .seg button { padding: 14px 8px; font-size: 14px; min-height: 50px; }
 
-  /* ค่ากำเหน็จ / ส่วนลด — stack 1 col */
-  .extra-grid { grid-template-columns: 1fr; gap: 10px; }
-  .simple-input input { font-size: 18px; padding: 12px 12px; }
-
-  /* ── Result panel — ลูกค้าเห็น ── */
-  .calc-result { padding: 20px 16px; }
-
-  /* ยอดรวม: ใช้สีทึบแทน gradient clip (render ถูกต้องบน iOS/Android ทุกรุ่น) */
-  .result-amount {
-    background: none;
-    -webkit-background-clip: unset;
-    background-clip: unset;
-    -webkit-text-fill-color: var(--gold);
-    animation: none;
-    font-size: clamp(32px, 9vw, 44px);
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    margin: 8px 0 6px;
+  /* น้ำหนัก — เปลี่ยนเป็น column layout: ตัวเลขบน, หน่วยล่าง */
+  .weight-input { flex-direction: column; border-radius: var(--radius); }
+  .weight-input input {
+    font-size: 38px;
+    padding: 16px;
+    text-align: center;
+    width: 100%;
+    border-bottom: 1px solid var(--border);
   }
-  .result-amount.zero { -webkit-text-fill-color: var(--text-mute); }
+  .weight-input .unit-pick {
+    border-left: none;
+    width: 100%;
+    display: flex;
+  }
+  .weight-input .unit-pick button {
+    flex: 1;
+    min-height: 48px;
+    font-size: 15px;
+    padding: 12px 4px;
+    border-right: 1px solid var(--border);
+    font-family: var(--serif-th);
+  }
+  .weight-input .unit-pick button:last-child { border-right: none; }
+
+  /* ค่ากำเหน็จ / ส่วนลด — แยกแถว */
+  .extra-grid { grid-template-columns: 1fr; gap: 12px; }
+  .simple-input input { font-size: 20px; padding: 14px 14px; }
+
+  /* ══ Result panel ══ */
+  .calc-result { padding: 20px 16px; text-align: center; }
+
+  /* ยอดรวม — ใหญ่ชัด ไม่ใช้ gradient clip */
+  .result-eyebrow { font-size: 11px; }
+  .result-title { font-size: 16px; margin-bottom: 4px; }
+
+  .result-amount {
+    display: block;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    -webkit-text-fill-color: var(--gold) !important;
+    animation: none !important;
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin: 12px 0 8px;
+    word-break: break-all;
+  }
+  .result-amount.zero { -webkit-text-fill-color: var(--text-mute) !important; }
   .result-amount .baht-sign {
-    -webkit-text-fill-color: var(--gold-soft);
+    display: inline;
+    -webkit-text-fill-color: var(--gold-soft) !important;
+    background: none !important;
+    animation: none !important;
     font-family: var(--mono);
-    font-size: clamp(20px, 5.5vw, 26px);
+    font-size: 28px;
+    font-weight: 500;
     position: static;
     top: 0;
-    vertical-align: baseline;
+    vertical-align: middle;
     margin-right: 4px;
   }
 
-  .result-eyebrow { font-size: 10px; }
-  .result-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--text-dim); }
-  .result-sub { font-size: 11px; margin-bottom: 16px; margin-top: 4px; }
+  .result-sub { font-size: 12px; margin: 4px 0 20px; }
 
-  /* Breakdown rows: ตัดข้อความยาวด้วย ellipsis */
-  .result-breakdown { gap: 7px; font-size: 12px; padding-top: 14px; }
-  .result-breakdown .row > span:first-child { font-size: 12px; }
-  .result-breakdown .row .v { font-size: 13px; }
-  .result-breakdown .row.total { padding-top: 10px; margin-top: 2px; }
-  .result-breakdown .row.total > span:first-child { font-size: 13px; font-weight: 600; white-space: normal; }
-  .result-breakdown .row.total .v { font-size: 16px; }
+  /* Breakdown — กลับมา left-align */
+  .result-breakdown { text-align: left; gap: 8px; font-size: 13px; padding-top: 16px; }
+  .result-breakdown .row { font-size: 13px; }
+  .result-breakdown .row .v { font-size: 14px; }
+  .result-breakdown .row.total { padding-top: 12px; }
+  .result-breakdown .row.total > span:first-child { font-size: 14px; font-weight: 600; white-space: normal; }
+  .result-breakdown .row.total .v { font-size: 18px; font-weight: 700; }
 
-  /* Action buttons — full width, thumb-friendly */
-  .action-row { grid-template-columns: 1fr; gap: 8px; margin-top: 18px; }
-  .btn-primary { padding: 15px 16px; font-size: 15px; min-height: 52px; }
-  .btn-ghost { padding: 13px 16px; font-size: 14px; min-height: 48px; }
+  /* Buttons — full width, 52px tall */
+  .action-row { grid-template-columns: 1fr; gap: 8px; margin-top: 20px; text-align: left; }
+  .btn-primary { padding: 16px; font-size: 16px; min-height: 52px; width: 100%; }
+  .btn-ghost   { padding: 14px; font-size: 14px; min-height: 48px; width: 100%; }
 
-  /* History search */
-  .seg-4 button { font-size: 11px; padding: 9px 4px; min-height: 40px; }
+  /* ─ History ─ */
+  .seg-4 button { font-size: 12px; padding: 10px 4px; min-height: 44px; }
 
-  /* History table → card list */
   .history-table { border-radius: var(--radius); }
   .history-table thead { display: none; }
-  .history-table,
-  .history-table tbody,
-  .history-table tr,
-  .history-table td { display: block; width: 100%; }
-  .history-table tr {
-    padding: 12px 14px 10px; border: none;
-    border-top: 1px solid var(--border); position: relative;
-  }
+  .history-table, .history-table tbody,
+  .history-table tr, .history-table td { display: block; width: 100%; }
+  .history-table tr { padding: 14px; border-top: 1px solid var(--border); }
   .history-table tr:first-child { border-top: none; }
   .history-table td { border: none; padding: 1px 0; }
   .history-table .code { font-size: 11px; color: var(--text-mute); }
   .history-table .amount { text-align: left; font-size: 20px; font-weight: 600; padding-top: 4px; color: var(--text); }
-  .history-table td.actions { padding-top: 8px; }
-  .history-table .icon-btn { padding: 8px 14px; font-size: 12px; min-height: 38px; }
+  .history-table td.actions { padding-top: 10px; }
+  .history-table .icon-btn { padding: 9px 16px; font-size: 13px; min-height: 40px; }
 
-  /* Receipt */
-  .receipt { padding: 22px 16px; }
-  .receipt-mark { font-size: 22px; }
-  .receipt-shop { font-size: 14px; }
-  .receipt-body { font-size: 12px; }
+  /* ─ Receipt ─ */
+  .receipt { padding: 24px 16px; max-width: 100%; }
+  .receipt-body { font-size: 13px; }
   .receipt-total .v { font-size: 20px; }
-  .receipt-code { font-size: 12px; padding: 4px 10px; }
-  .receipt-qr { padding: 10px; gap: 10px; }
-  .receipt-actions button { width: 100%; padding: 13px; min-height: 48px; }
+  .receipt-actions { flex-direction: column; gap: 8px; }
+  .receipt-actions button { width: 100%; padding: 14px; min-height: 48px; }
 
   .site-foot { padding: 16px 12px; font-size: 10px; }
 }
 
 /* ── Very small phone (≤ 360px) ── */
 @media (max-width: 360px) {
-  .page { padding: 0 8px 48px; }
-  .price-row .col .value { font-size: 24px; }
-  .weight-input input { font-size: 24px; }
-  .simple-input input { font-size: 16px; }
-  .result-amount { font-size: 28px; }
+  .price-row .col .value { font-size: 22px; }
+  .weight-input input { font-size: 32px; }
+  .simple-input input { font-size: 18px; }
+  .result-amount { font-size: 40px !important; }
+  .result-amount .baht-sign { font-size: 24px !important; }
   .header-meta { display: none; }
 }
 
