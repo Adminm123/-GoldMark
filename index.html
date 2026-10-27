@@ -1893,7 +1893,7 @@ function Receipt({ record, shopName, branch, onClose }) {
         <div className="receipt-total"><span className="k">รวมสุทธิ</span><span className="v">฿ {fmt(record.total,2)}</span></div>
         <div className="receipt-qr">
           <div className="qr-grid" aria-hidden></div>
-          <div className="text">ตรวจสอบความถูกต้องของใบประเมินได้ที่<b>{record.code}</b>ราคาอ้างอิงประกาศจากสมาคมค้าทองคำ</div>
+          <div className="text">ตรวจสอบความถูกต้องของใบประเมินได้ที่<b>{record.code}</b>ราคาอ้างอิงจากฮั่วเซ่งเฮง ณ เวลาที่ระบุ</div>
         </div>
         <div className="receipt-foot">
           ราคาอ้างอิงจากสมาคมค้าทองคำแห่งประเทศไทย<br/>
@@ -1909,17 +1909,7 @@ function Receipt({ record, shopName, branch, onClose }) {
 }
 
 /* ── Seed ── */
-function seedHistory() {
-  const now = new Date();
-  const ago = m => { const d=new Date(now); d.setMinutes(d.getMinutes()-m); return d.toISOString(); };
-  return [
-    { code:'GC-690513-0001', timestamp:ago(220), mode:'sell', type:'jewelry', weight:1, unit:'baht', weightBaht:1, pricePerBaht:48850, basePrice:48850, labor:500, laborFee:500, discount:0, oldBuy:0, total:49350, descAction:'ขายทองให้ลูกค้า' },
-    { code:'GC-690513-0002', timestamp:ago(180), mode:'buy',  type:'jewelry', weight:2, unit:'baht', weightBaht:2, pricePerBaht:47402, basePrice:94804, labor:0,   laborFee:0,   discount:0, oldBuy:0, total:94804, descAction:'รับซื้อทองจากลูกค้า' },
-    { code:'GC-690513-0003', timestamp:ago(95),  mode:'sell', type:'bar',     weight:5, unit:'baht', weightBaht:5, pricePerBaht:48350, basePrice:241750,labor:0,   laborFee:0,   discount:250,oldBuy:0, total:241500,descAction:'ขายทองให้ลูกค้า' },
-    { code:'GC-690513-0004', timestamp:ago(42),  mode:'trade',type:'jewelry', weight:2, unit:'baht', weightBaht:2, pricePerBaht:48850, basePrice:97700, labor:500, laborFee:1000,discount:0, oldBuy:47402,total:51298,descAction:'เปลี่ยน / ต่อทอง' },
-    { code:'GC-690513-0005', timestamp:ago(12),  mode:'sell', type:'jewelry', weight:2, unit:'salueng',weightBaht:0.5,pricePerBaht:48850,basePrice:24425,labor:500,laborFee:250, discount:0, oldBuy:0, total:24675,descAction:'ขายทองให้ลูกค้า' },
-  ];
-}
+function seedHistory() { return []; }
 
 /* ── Live price — Supabase cache + Realtime + smart fetch ── */
 const HSH_API = 'https://apicheckpricev3.huasengheng.com/api/values/getprice/';
