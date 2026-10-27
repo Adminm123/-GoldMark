@@ -764,6 +764,93 @@ body { overflow-x: hidden; }
 .transaction-copy small { color: var(--text-dim); font-size: 12px; line-height: 1.45; }
 .transaction-arrow { color: #35658A; font-size: 26px; }
 @media (max-width: 560px) { .transaction-card { min-height: 78px; padding: 12px; gap: 11px; } .transaction-icon { width: 40px; height: 40px; flex-basis: 40px; } }
+
+/* ── GoldMark modern tablet-first UI refresh ── */
+:root {
+  --bg: #f5f6f8;
+  --bg-2: #ffffff;
+  --bg-3: #eef1f5;
+  --text: #172033;
+  --text-dim: #667085;
+  --text-mute: #8791a2;
+  --border: #e3e7ee;
+  --border-bright: #d3dbe6;
+  --gold: #9a6a13;
+  --gold-soft: #b78324;
+  --radius: 18px;
+}
+html { scroll-behavior: smooth; }
+body {
+  background: radial-gradient(ellipse at top left, rgba(203,169,101,.10), transparent 34%), #f5f6f8 !important;
+  color: #172033;
+  font-family: 'Noto Serif Thai', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+.page { max-width: 1120px !important; padding: 26px 22px 60px !important; }
+.site-head, header.site-header, .site-header {
+  backdrop-filter: blur(18px);
+}
+section { margin-bottom: 26px !important; }
+.section-head { align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px !important; }
+.section-head h2 { font-size: clamp(20px, 2.6vw, 28px) !important; letter-spacing: -.025em; }
+.index { color: #9a6a13 !important; }
+.prices { gap: 16px !important; }
+.price-card {
+  border: 1px solid #e4e8ef !important;
+  border-radius: 22px !important;
+  background: linear-gradient(145deg,#fff,#fbfcfe) !important;
+  box-shadow: 0 12px 36px rgba(25,39,65,.055) !important;
+  padding: clamp(20px,3vw,32px) !important;
+}
+.type-label { color: #8b6a2a !important; letter-spacing: .055em; }
+.price-row { gap: 12px !important; }
+.price-row .col { background: #f6f8fb; border: 1px solid #edf0f5; border-radius: 16px; padding: 16px !important; }
+.price-row .col .value { font-size: clamp(24px,4vw,36px) !important; letter-spacing: -.04em; }
+.calculator, .calc-card, .history-card, .chart-card, .panel, .wizard-head {
+  border-radius: 20px !important;
+}
+.transaction-menu { gap: 14px !important; }
+.transaction-card {
+  min-height: 96px !important; padding: 18px !important;
+  border-radius: 18px !important; border-color: #e1e6ef !important;
+  background: rgba(255,255,255,.94) !important;
+  box-shadow: 0 4px 16px rgba(27,39,61,.035);
+}
+.transaction-card:hover, .transaction-card:focus-visible {
+  border-color: #b68a3d !important; background: #fffdf8 !important;
+  transform: translateY(-1px); outline: none;
+}
+.transaction-card.selected { border-color: #a67b2b !important; background: #fff9ed !important; }
+.transaction-icon { border-radius: 14px !important; background: #f5ecd9 !important; color: #8e641a !important; }
+.wizard-head { background: #fff !important; border-color: #e4e8ef !important; }
+.wizard-dot { border-color: #d7dde7 !important; }
+.wizard-step.current .wizard-dot, .wizard-step.done .wizard-dot { background: #8f1724 !important; border-color: #8f1724 !important; }
+.wizard-next { background: #8f1724 !important; border-color: #8f1724 !important; border-radius: 13px !important; }
+.wizard-back { border-radius: 13px !important; }
+input, select, textarea {
+  border-radius: 12px !important;
+  border-color: #dce2eb !important;
+}
+button { transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+button:active { transform: scale(.985); }
+.cust-box, .cust-box-wide {
+  border-radius: 24px !important; border: 1px solid rgba(255,255,255,.6) !important;
+  box-shadow: 0 30px 90px rgba(10,20,40,.28) !important;
+}
+.cust-chip { border-radius: 12px !important; }
+.cust-chip.active { background: #8f1724 !important; border-color: #8f1724 !important; }
+.site-foot { color: #7b8494 !important; padding: 24px !important; text-align: center; }
+@media (max-width: 640px) {
+  .page { padding: 18px 14px 44px !important; }
+  .section-head { align-items: flex-start; }
+  .section-head .meta { display: none; }
+  .price-card { padding: 18px !important; border-radius: 18px !important; }
+  .price-row .col { padding: 12px 10px !important; }
+  .transaction-card { min-height: 82px !important; padding: 13px !important; }
+}
+
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -1074,7 +1161,7 @@ function PricesSection({ prices, lastChange, status, strTime, onRefresh }) {
       </div>
       <div className="prices">
         <article className="price-card" style={{opacity: status==='loading' ? 0.6 : 1, transition:'opacity 0.4s'}}>
-          <div className="type-label">GOLD BAR · ทองคำแท่ง · ห้วยเซียงหัว</div>
+          <div className="type-label">GOLD BAR · ทองคำแท่ง · ฮั่วเซ่งเฮง</div>
           <h3 className="type-th">ทองคำแท่ง <span className="purity">96.5%</span></h3>
           <div className={`delta ${dir}`}>
             <span>{delta >= 0 ? '▲' : '▼'}</span> {delta >= 0 ? '+' : ''}{fmt(delta, 0)}
@@ -1834,117 +1921,87 @@ function seedHistory() {
   ];
 }
 
-/* ── Live price — Supabase cache + Realtime + smart fetch ── *
- *
- * Architecture (multi-branch friendly):
- *   • ราคาเก็บใน Supabase gold_prices (1 แถว)
- *   • client อ่านจาก Supabase ก่อน (เร็ว, ไม่กด HSH)
- *   • Supabase Realtime push ให้ทุก tab/สาขาทันที
- *   • ทุก 60 วิ: client 1 คน "ชนะ" atomic DB function
- *     → ดึง HSH → เขียน Supabase → Realtime แจ้งทุกคน
- *   • ผล: HSH โดนเรียก 1 ครั้ง/นาที ไม่ว่าจะมีกี่สาขา
- */
-const HSH_API    = 'https://apicheckpricev3.huasengheng.com/api/values/getprice/';
+/* ── Centralized GoldMark price cache ──
+   Browser clients only read the shared Supabase cache. They never call HSH directly.
+   The Vercel Cron endpoint is the sole scheduled upstream fetcher.
+*/
 const PRICE_TABLE = 'gold_prices';
-const STALE_MS   = 55_000;   // cache เก่ากว่านี้ถือว่า stale
-const JITTER_MAX = 8_000;    // random delay สูงสุด (ms) กันทุกคนยิงพร้อมกัน
-
-async function hshFetch() {
-  const res = await fetch(HSH_API, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const d = (await res.json()).find(x => x.GoldType === 'REF' && x.GoldCode === '96.50');
-  if (!d) throw new Error('ไม่พบข้อมูล 96.50%');
-  return {
-    buy:         Number(String(d.Buy).replace(/,/g,'')),
-    sell:        Number(String(d.Sell).replace(/,/g,'')),
-    buy_change:  Number(String(d.BuyChange  || 0).replace(/,/g,'')),
-    sell_change: Number(String(d.SellChange || 0).replace(/,/g,'')),
-    str_time:    d.StrTimeUpdate || '',
-  };
-}
+const PRICE_MAX_AGE_MS = 95_000;
 
 function useGoldPrice(fallbackBuy, fallbackSell) {
   const [live, setLive] = useState(null);
   const [status, setStatus] = useState('loading');
 
   const applyRow = useCallback((row) => {
-    if (!row || !row.sell) return;
-    setLive({ buy: row.buy, sell: row.sell, buyChange: row.buy_change, sellChange: row.sell_change, strTime: row.str_time });
-    setStatus('ok');
-  }, []);
-
-  /* เขียน Supabase ผ่าน atomic function: จะ UPDATE จริงแค่เมื่อ cache เก่า
-     → ถ้า 2 client เรียกพร้อมกัน คนแรกเขียน คนหลัง no-op */
-  const pushPrice = useCallback(async (data) => {
-    await sb.rpc('update_gold_price_if_stale', {
-      p_buy: data.buy, p_sell: data.sell,
-      p_buy_change: data.buy_change, p_sell_change: data.sell_change,
-      p_str_time: data.str_time,
+    if (!row || Number(row.buy) <= 0 || Number(row.sell) <= 0) {
+      setStatus('error');
+      return;
+    }
+    const updatedAt = row.updated_at ? new Date(row.updated_at).getTime() : 0;
+    const fresh = updatedAt > 0 && Date.now() - updatedAt <= PRICE_MAX_AGE_MS;
+    setLive({
+      buy: Number(row.buy),
+      sell: Number(row.sell),
+      buyChange: Number(row.buy_change || 0),
+      sellChange: Number(row.sell_change || 0),
+      strTime: row.str_time || '',
+      updatedAt: row.updated_at || null,
     });
+    setStatus(fresh ? 'ok' : 'error');
   }, []);
 
-  /* กด refresh ด้วยมือ — ข้าม stale check, ดึง HSH เลย */
-  const forceRefresh = useCallback(async () => {
-    setStatus('loading');
+  const loadSharedPrice = useCallback(async () => {
     try {
-      const data = await hshFetch();
-      await sb.from(PRICE_TABLE).upsert({ id: 1, ...data, updated_at: new Date().toISOString() });
-      applyRow({ ...data, buy_change: data.buy_change, sell_change: data.sell_change });
+      const { data, error } = await sb.from(PRICE_TABLE).select('*').eq('id', 1).maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error('ยังไม่มีราคากลางในระบบ');
+      applyRow(data);
     } catch (e) {
-      console.warn('Refresh error:', e);
+      console.warn('Shared price read failed:', e.message);
       setStatus('error');
     }
   }, [applyRow]);
 
+  const forceRefresh = useCallback(async () => {
+    setStatus('loading');
+    await loadSharedPrice();
+  }, [loadSharedPrice]);
+
   useEffect(() => {
     let dead = false;
-
-    (async () => {
-      /* 1. อ่าน cache จาก Supabase ก่อน (แสดงราคาทันทีถ้ามี) */
+    const initial = async () => {
       try {
-        const { data: cached } = await sb.from(PRICE_TABLE).select('*').eq('id', 1).maybeSingle();
-        if (dead) return;
-        let stale = true;
-        if (cached && cached.sell > 0) {
-          applyRow(cached);
-          stale = Date.now() - new Date(cached.updated_at).getTime() >= STALE_MS;
-        }
-
-        /* 2. Cache เก่า → wait jitter → ดึง HSH (atomic: แค่คนเดียวเขียน) */
-        if (stale) {
-          await new Promise(r => setTimeout(r, Math.random() * JITTER_MAX));
-          if (dead) return;
-          const data = await hshFetch();
-          if (!dead) { applyRow({ ...data, buy_change: data.buy_change, sell_change: data.sell_change }); await pushPrice(data); }
-        }
+        const { data, error } = await sb.from(PRICE_TABLE).select('*').eq('id', 1).maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('ยังไม่มีราคากลางในระบบ');
+        if (!dead) applyRow(data);
       } catch (e) {
-        console.warn('Init price error:', e.message);
+        console.warn('Initial shared price read failed:', e.message);
         if (!dead) setStatus('error');
       }
-    })();
+    };
+    initial();
 
-    /* 3. Supabase Realtime — ทุก tab / สาขา ได้รับทันทีเมื่อใครก็ตามเขียน */
-    const ch = sb.channel('gold_rt')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: PRICE_TABLE },
-        ({ new: row }) => { if (!dead) applyRow(row); })
+    const ch = sb.channel('goldmark_shared_price')
+      .on('postgres_changes', { event: '*', schema: 'public', table: PRICE_TABLE },
+        ({ new: row }) => { if (!dead && row?.id === 1) applyRow(row); })
       .subscribe();
 
-    /* 4. ทุก 60 วิ: ลอง push ราคาใหม่ (atomic fn กันเขียนซ้ำ)
-          → Realtime จะ notify ทุกคน, HSH โดนเรียกแค่ 1 ครั้ง */
-    const timer = setInterval(async () => {
-      if (dead) return;
-      try {
-        await new Promise(r => setTimeout(r, Math.random() * JITTER_MAX));
-        if (dead) return;
-        const data = await hshFetch();
-        if (!dead) { applyRow({ ...data, buy_change: data.buy_change, sell_change: data.sell_change }); await pushPrice(data); }
-      } catch (e) { console.warn('Interval price error:', e.message); }
-    }, 60_000);
+    // Read shared cache only. This is not an upstream HSH request.
+    const timer = setInterval(() => { if (!dead) loadSharedPrice(); }, 15_000);
+    const freshnessTimer = setInterval(() => {
+      if (!dead && live?.updatedAt && Date.now() - new Date(live.updatedAt).getTime() > PRICE_MAX_AGE_MS) setStatus('error');
+    }, 5_000);
 
-    return () => { dead = true; clearInterval(timer); sb.removeChannel(ch); };
-  }, [applyRow, pushPrice]);
+    return () => {
+      dead = true;
+      clearInterval(timer);
+      clearInterval(freshnessTimer);
+      sb.removeChannel(ch);
+    };
+  }, [applyRow, loadSharedPrice]);
 
-  const buy  = live ? live.buy  : fallbackBuy;
+  const buy = live ? live.buy : fallbackBuy;
   const sell = live ? live.sell : fallbackSell;
   const delta = live ? live.sellChange : 0;
   return { buy, sell, delta, strTime: live?.strTime ?? '', status, refresh: forceRefresh };
@@ -2008,7 +2065,7 @@ function App() {
         <HistorySection records={history} onLookup={r => setActiveReceipt(r)} query={query} setQuery={setQuery} />
       </main>
       <footer className="site-foot">
-        <div>ราคาอ้างอิงจากสมาคมค้าทองคำแห่งประเทศไทย · ระบบนี้ใช้สำหรับประเมินราคาเบื้องต้น</div>
+        <div>ราคาตั้งต้นจากฮั่วเซ่งเฮง · GoldMark บันทึกหลักฐานเมื่อยืนยันรายการ</div>
       </footer>
       {pendingRecord && (
         <CommitModal
