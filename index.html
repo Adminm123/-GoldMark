@@ -1921,80 +1921,85 @@ function seedHistory() {
   ];
 }
 
-/* ── Centralized GoldMark price cache ──
-   Browser clients only read the shared Supabase cache. They never call HSH directly.
-   The Vercel Cron endpoint is the sole scheduled upstream fetcher.
-*/
+/* ── Live price — Supabase cache + Realtime + smart fetch ── */
+const HSH_API = 'https://apicheckpricev3.huasengheng.com/api/values/getprice/';
 const PRICE_TABLE = 'gold_prices';
-const PRICE_MAX_AGE_MS = 95_000;
+const STALE_MS = 55_000;
+const JITTER_MAX = 8_000;
+
+async function hshFetch() {
+  const res = await fetch(HSH_API, { headers: { Accept: 'application/json' } });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const list = await res.json();
+  const d = Array.isArray(list) ? list.find(x => x.GoldType === 'REF' && x.GoldCode === '96.50') : null;
+  if (!d) throw new Error('ไม่พบข้อมูลทองคำแท่ง 96.5%');
+  const num = v => Number(String(v ?? '').replace(/,/g, ''));
+  const buy = num(d.Buy), sell = num(d.Sell);
+  if (!Number.isFinite(buy) || !Number.isFinite(sell) || buy <= 0 || sell <= 0) throw new Error('ราคาที่ได้รับไม่ถูกต้อง');
+  return { buy, sell, buy_change: num(d.BuyChange || 0), sell_change: num(d.SellChange || 0), str_time: d.StrTimeUpdate || '' };
+}
 
 function useGoldPrice(fallbackBuy, fallbackSell) {
   const [live, setLive] = useState(null);
   const [status, setStatus] = useState('loading');
-
-  const applyRow = useCallback((row) => {
-    if (!row || Number(row.buy) <= 0 || Number(row.sell) <= 0) {
-      setStatus('error');
-      return;
-    }
-    const updatedAt = row.updated_at ? new Date(row.updated_at).getTime() : 0;
-    const fresh = updatedAt > 0 && Date.now() - updatedAt <= PRICE_MAX_AGE_MS;
-    setLive({
-      buy: Number(row.buy),
-      sell: Number(row.sell),
-      buyChange: Number(row.buy_change || 0),
-      sellChange: Number(row.sell_change || 0),
-      strTime: row.str_time || '',
-      updatedAt: row.updated_at || null,
-    });
+  const applyRow = useCallback(row => {
+    if (!row || Number(row.buy) <= 0 || Number(row.sell) <= 0) return;
+    const fresh = row.updated_at && Date.now() - new Date(row.updated_at).getTime() <= 95_000;
+    setLive({ buy:Number(row.buy), sell:Number(row.sell), buyChange:Number(row.buy_change||0), sellChange:Number(row.sell_change||0), strTime:row.str_time||'', updatedAt:row.updated_at||null });
     setStatus(fresh ? 'ok' : 'error');
   }, []);
-
-  const loadSharedPrice = useCallback(async () => {
-    try {
-      const response = await fetch('/api/price?refresh=1', { cache: 'no-store' });
-      const result = await response.json();
-      if (!result.price) throw new Error(result.status || 'ยังไม่มีราคากลางในระบบ');
-      applyRow({ ...result.price, buy_change: result.price.buy_change, sell_change: result.price.sell_change, updated_at: result.updated_at });
-      if (!result.ok) setStatus('error');
-    } catch (e) {
-      console.warn('Shared price endpoint failed:', e.message);
-      setStatus('error');
-    }
-  }, [applyRow]);
-
+  const pushPrice = useCallback(async data => {
+    const { error } = await sb.rpc('update_gold_price_if_stale', { p_buy:data.buy, p_sell:data.sell, p_buy_change:data.buy_change, p_sell_change:data.sell_change, p_str_time:data.str_time });
+    if (error) throw error;
+  }, []);
   const forceRefresh = useCallback(async () => {
     setStatus('loading');
-    await loadSharedPrice();
-  }, [loadSharedPrice]);
-
+    try {
+      const data = await hshFetch();
+      const { error } = await sb.from(PRICE_TABLE).upsert({ id:1, ...data, updated_at:new Date().toISOString() });
+      if (error) throw error;
+      applyRow({ ...data, updated_at:new Date().toISOString() });
+    } catch (e) { console.warn('Price refresh failed:', e.message); setStatus('error'); }
+  }, [applyRow]);
   useEffect(() => {
     let dead = false;
-    loadSharedPrice();
-
-    const ch = sb.channel('goldmark_shared_price')
-      .on('postgres_changes', { event: '*', schema: 'public', table: PRICE_TABLE },
-        ({ new: row }) => { if (!dead && row?.id === 1) applyRow(row); })
-      .subscribe();
-
-    // Read shared cache only. This is not an upstream HSH request.
-    const timer = setInterval(() => { if (!dead) loadSharedPrice(); }, 15_000);
-    const freshnessTimer = setInterval(() => {
-      if (!dead && live?.updatedAt && Date.now() - new Date(live.updatedAt).getTime() > PRICE_MAX_AGE_MS) setStatus('error');
-    }, 5_000);
-
-    return () => {
-      dead = true;
-      clearInterval(timer);
-      clearInterval(freshnessTimer);
-      sb.removeChannel(ch);
+    const init = async () => {
+      try {
+        const { data: cached, error } = await sb.from(PRICE_TABLE).select('*').eq('id',1).maybeSingle();
+        if (error) throw error;
+        if (dead) return;
+        if (cached) applyRow(cached);
+        const stale = !cached || !cached.updated_at || Date.now()-new Date(cached.updated_at).getTime() >= STALE_MS;
+        if (stale) {
+          await new Promise(resolve=>setTimeout(resolve,Math.random()*JITTER_MAX));
+          if (dead) return;
+          const { data: check } = await sb.from(PRICE_TABLE).select('*').eq('id',1).maybeSingle();
+          if (!check || !check.updated_at || Date.now()-new Date(check.updated_at).getTime() >= STALE_MS) {
+            const data = await hshFetch();
+            if (!dead) { applyRow({ ...data, updated_at:new Date().toISOString() }); await pushPrice(data); }
+          } else if (!dead) applyRow(check);
+        }
+      } catch(e) { console.warn('Price init failed:',e.message); if(!dead)setStatus('error'); }
     };
-  }, [applyRow, loadSharedPrice]);
-
-  const buy = live ? live.buy : fallbackBuy;
-  const sell = live ? live.sell : fallbackSell;
-  const delta = live ? live.sellChange : 0;
-  return { buy, sell, delta, strTime: live?.strTime ?? '', status, refresh: forceRefresh };
+    init();
+    const channel = sb.channel('gold_rt').on('postgres_changes',{event:'*',schema:'public',table:PRICE_TABLE},({new:row})=>{if(!dead&&row?.id===1)applyRow(row)}).subscribe();
+    const timer = setInterval(async()=>{
+      if(dead)return;
+      try {
+        const { data: cached } = await sb.from(PRICE_TABLE).select('*').eq('id',1).maybeSingle();
+        if(cached?.updated_at && Date.now()-new Date(cached.updated_at).getTime()<STALE_MS) { applyRow(cached); return; }
+        await new Promise(resolve=>setTimeout(resolve,Math.random()*JITTER_MAX));
+        if(dead)return;
+        const { data: check } = await sb.from(PRICE_TABLE).select('*').eq('id',1).maybeSingle();
+        if(check?.updated_at && Date.now()-new Date(check.updated_at).getTime()<STALE_MS) { applyRow(check); return; }
+        const data=await hshFetch();
+        if(!dead){applyRow({...data,updated_at:new Date().toISOString()});await pushPrice(data);}
+      } catch(e) { console.warn('Price poll failed:',e.message); }
+    },60_000);
+    return ()=>{dead=true;clearInterval(timer);sb.removeChannel(channel);};
+  },[applyRow,pushPrice]);
+  const buy=live?live.buy:fallbackBuy, sell=live?live.sell:fallbackSell, delta=live?live.sellChange:0;
+  return {buy,sell,delta,strTime:live?.strTime??'',status,refresh:forceRefresh};
 }
 
 /* ── App ── */
