@@ -49,5 +49,5 @@ export default async function handler(req,res){
   age=Date.now()-new Date(r.updated_at).getTime();
   const fresh=Number.isFinite(age)&&age>=0&&age<=95000;
   return out(res,fresh?200:503,{ok:fresh,status:fresh?'ok':'stale',price:{buy:Number(r.buy),sell:Number(r.sell),buy_change:Number(r.buy_change||0),sell_change:Number(r.sell_change||0),str_time:r.str_time||''},updated_at:r.updated_at,age_ms:age});
- }catch(e){console.error('GoldMark price refresh/read failed',e.message);return out(res,503,{ok:false,status:'error',error:'Shared price cache unavailable'})}
+ }catch(e){console.error('GoldMark price refresh/read failed',e.message);return out(res,503,{ok:false,status:'error',error:'Shared price cache unavailable',detail:String(e.message||e).slice(0,180)})}
 }
