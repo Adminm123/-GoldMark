@@ -1970,18 +1970,7 @@ function useGoldPrice(fallbackBuy, fallbackSell) {
 
   useEffect(() => {
     let dead = false;
-    const initial = async () => {
-      try {
-        const { data, error } = await sb.from(PRICE_TABLE).select('*').eq('id', 1).maybeSingle();
-        if (error) throw error;
-        if (!data) throw new Error('ยังไม่มีราคากลางในระบบ');
-        if (!dead) applyRow(data);
-      } catch (e) {
-        console.warn('Initial shared price read failed:', e.message);
-        if (!dead) setStatus('error');
-      }
-    };
-    initial();
+    loadSharedPrice();
 
     const ch = sb.channel('goldmark_shared_price')
       .on('postgres_changes', { event: '*', schema: 'public', table: PRICE_TABLE },
