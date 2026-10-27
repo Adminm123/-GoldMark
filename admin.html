@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin — ระบบหลังบ้าน</title>
+<title>ทองคำเยาวราช | ระบบจัดการ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -213,6 +213,25 @@ tr:hover td { background: rgba(0,0,0,0.02); }
 
   .login-box { padding: 28px 20px; }
 }
+
+/* Yaowarat Gold admin usability refinements */
+:root { --gold:#a97818; --gold-bright:#c49a43; --gold-soft:#946715; --radius:12px; --radius-lg:16px; }
+html { -webkit-text-size-adjust:100%; }
+body { background:#f7f6f3; }
+button, input, select, textarea { font:inherit; }
+button, input, select { touch-action:manipulation; }
+button { min-height:42px; }
+input, select { min-height:42px; }
+:focus-visible { outline:3px solid rgba(169,120,24,.55); outline-offset:2px; }
+@media(max-width:600px) {
+  body { font-size:15px; }
+  .admin-wrap { width:100%; }
+  .admin-header { flex-wrap:wrap; gap:10px; }
+  .tab-bar { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tab { white-space:nowrap; }
+  input, select { font-size:16px; }
+}
+
 </style>
 </head>
 <body>
@@ -251,9 +270,9 @@ function LoginPage({ onLogin }) {
       <div className="login-box">
         <div className="login-logo">
           <div className="login-icon">G</div>
-          <div className="login-title">ระบบหลังบ้าน</div>
+          <div className="login-title">ทองคำเยาวราช</div>
         </div>
-        <div className="login-sub">Gold Admin · กรุณาเข้าสู่ระบบ</div>
+        <div className="login-sub">ระบบจัดการสาขาและพนักงาน · กรุณาเข้าสู่ระบบ</div>
         <div className="field">
           <label>อีเมล</label>
           <div className="f-input"><input type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} placeholder="admin@example.com" autoFocus /></div>
@@ -757,7 +776,7 @@ function AdminApp() {
         <div className="admin-brand">
           <div className="admin-brand-icon">G</div>
           <div>
-            <div className="admin-brand-text">Admin Panel</div>
+            <div className="admin-brand-text">ทองคำเยาวราช · หลังบ้าน</div>
           </div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:12}}>

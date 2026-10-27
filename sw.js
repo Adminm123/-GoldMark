@@ -1,11 +1,11 @@
-/* GoldMark Service Worker
+/* Yaowarat Gold Service Worker
  * Strategy:
  *   - index.html / admin.html  → Network-first (ได้ update เสมอ), cache เป็น fallback
  *   - CDN assets (React, fonts) → Cache-first (URL มี version อยู่แล้ว)
  *   - Supabase / HSH API       → Network-only (ไม่ cache ข้อมูลสด)
  */
 
-const CACHE = 'goldmark-v1';
+const CACHE = 'yaowarat-gold-v2';
 
 const CDN_PREFIXES = [
   'https://fonts.googleapis.com',

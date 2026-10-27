@@ -1,13 +1,13 @@
 {
-  "name": "ระบบประเมินราคาทอง",
-  "short_name": "GoldMark",
-  "description": "ระบบประเมินและคำนวณราคาทองคำ",
+  "name": "ทองคำเยาวราช | ระบบประเมินราคา",
+  "short_name": "ทองคำเยาวราช",
+  "description": "ระบบประเมินราคาทองสำหรับพนักงานสาขาและเครื่องกลาง",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f2f2f7",
-  "theme_color": "#b07d0f",
+  "background_color": "#f7f6f3",
+  "theme_color": "#8f1724",
   "lang": "th",
   "icons": [
     {
@@ -18,5 +18,8 @@
     }
   ],
   "screenshots": [],
-  "categories": ["finance", "business"]
+  "categories": [
+    "finance",
+    "business"
+  ]
 }
