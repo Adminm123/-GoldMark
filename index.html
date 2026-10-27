@@ -1153,6 +1153,21 @@ function getTierFee(weightBaht, tiers, fallback) {
   return Number(fallback) || 0;
 }
 
+.wizard-head { margin: 0 0 18px; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-2); }
+.wizard-progress { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.wizard-step { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--text-mute); font-size: 12px; }
+.wizard-dot { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border: 1px solid var(--border-bright); border-radius: 50%; font-family: var(--mono); font-weight: 700; }
+.wizard-step.current { color: var(--text); font-weight: 700; }
+.wizard-step.current .wizard-dot, .wizard-step.done .wizard-dot { color: #fff; background: #35658A; border-color: #35658A; }
+.wizard-caption { margin-top: 12px; color: var(--text-mute); font-size: 12px; }
+.wizard-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.wizard-nav button { min-height: 48px; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+.wizard-back { border: 1px solid var(--border-bright); background: transparent; color: var(--text); }
+.wizard-back:disabled { opacity: .35; cursor: not-allowed; }
+.wizard-next { margin-left: auto; border: 1px solid #35658A; background: #35658A; color: #fff; min-width: 132px; }
+.safety-note { margin-top: 12px; color: var(--text-mute); font-size: 12px; line-height: 1.6; }
+@media (max-width: 560px) { .wizard-head { padding: 12px; } .wizard-progress { gap: 3px; } .wizard-step { flex-direction: column; justify-content: center; text-align: center; gap: 4px; font-size: 10px; } .wizard-label { line-height: 1.25; } .wizard-nav button { flex: 1; } }
+
 /* ── Calculator ── */
 function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
   const [txMode, setTxMode] = useState('sell');      // sell | buy | trade
@@ -1164,6 +1179,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
   const [laborOverride, setLaborOverride] = useState('');
   const [discount, setDiscount] = useState('0');
   const [showCustomer, setShowCustomer] = useState(false);
+  const [step, setStep] = useState(1);
 
   const weightBaht    = toBaht(weight, unit);
   const oldWeightBaht = toBaht(oldWeight || '0', oldUnit);
@@ -1253,6 +1269,10 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
 
   const commit = () => {
     if (!canCommit) return;
+    const amount = txMode === 'buy' ? calc.shopReturns : (calc.customerPays > 0 ? calc.customerPays : calc.shopReturns);
+    const direction = txMode === 'buy' || calc.shopReturns > 0 ? 'ร้านจ่ายให้ลูกค้า' : 'ลูกค้าชำระ';
+    const confirmText = `ยืนยันบันทึกรายการนี้หรือไม่?\\n\\nรายการ: ${calc.descAction}\\nชนิดทอง: ${goldType === 'bar' ? 'ทองคำแท่ง' : 'ทองรูปพรรณ'}\\nน้ำหนัก: ${fmt(weightBaht,2)} บาท\\nราคาทองอ้างอิง: ${fmt(calc.pricePerBaht,0)} บาท/บาทน้ำหนัก\\n${direction}: ${fmt(amount,0)} บาท\\n\\nกรุณาตรวจสอบตัวเลขก่อนยืนยัน`;
+    if (!window.confirm(confirmText)) return;
     onCommit({
       mode: txMode, type: goldType,
       weight: Number(weight), unit, weightBaht,
@@ -1267,7 +1287,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
     });
   };
 
-  const reset = () => { setWeight('1'); setOldWeight('1'); setDiscount('0'); setLaborOverride(''); };
+  const reset = () => { setWeight('1'); setOldWeight('1'); setDiscount('0'); setLaborOverride(''); setStep(1); };
 
   /* ─ UI ─ */
   const UnitPick = ({ val, setVal }) => (
@@ -1285,18 +1305,29 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
         <div className="title"><span className="index">No. II.</span><h2>คำนวณราคา</h2></div>
         <span className="meta">CALCULATOR</span>
       </div>
+      <div className="wizard-head">
+        <div className="wizard-progress" aria-label={`ขั้นตอนที่ ${step} จาก 4`}>
+          {[['1','ประเภทรายการ'],['2','น้ำหนักทอง'],['3','ค่าธรรมเนียม'],['4','ตรวจสอบ']].map(([n,label]) => (
+            <div key={n} className={`wizard-step ${step===Number(n)?'current':step>Number(n)?'done':''}`}>
+              <span className="wizard-dot">{step>Number(n)?'✓':n}</span><span className="wizard-label">{label}</span>
+            </div>
+          ))}
+        </div>
+        <div className="wizard-caption">ขั้นตอนที่ {step} จาก 4 · {['เลือกประเภทรายการ','ระบุชนิดและน้ำหนักทอง','ตรวจค่ากำเหน็จและส่วนลด','ตรวจสอบยอดก่อนบันทึก'][step-1]}</div>
+      </div>
       <div className="calc-layout">
 
         {/* ── Form ── */}
         <div className="calc-form">
           {/* Mode tabs */}
-          <div className="tx-tabs">
+          {step === 1 && <div className="tx-tabs">
             {[['sell','ขายทอง'],['buy','รับซื้อ'],['trade','เปลี่ยนทอง']].map(([m,l]) => (
               <button key={m} className={`tx-tab ${txMode===m?'active':''}`} onClick={() => setTxMode(m)}>{l}</button>
             ))}
-          </div>
+          </div>}
 
-          <div className="field-group">
+          {(step === 2 || step === 3) && <div className="field-group">
+            {step === 2 && <>
             {/* Gold type */}
             <div className="field">
               <label><span className="th">ชนิดทอง</span></label>
@@ -1346,6 +1377,9 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
               </div>
             </div>
 
+            </>}
+
+            {step === 3 && <>
             {/* Labor fee / exchange fee (not for buy) */}
             {txMode !== 'buy' && (
               <div className="field">
@@ -1382,11 +1416,12 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
                 {calc.warnDiscount && <div style={{fontSize:11,color:'#e09478',marginTop:4}}>⚠ เกินส่วนลดสูงสุด</div>}
               </div>
             )}
-          </div>
+            </>}
+          </div>}
         </div>
 
         {/* ── Result ── */}
-        <div className="calc-result">
+        {step === 4 && <div className="calc-result">
           <div className="result-eyebrow">{calc.descAction}</div>
 
           {txMode === 'buy' ? (
@@ -1462,10 +1497,19 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
             </div>
           )}
           <div className="action-row">
-            <button className="btn-primary" disabled={!canCommit} onClick={commit}>บันทึก &amp; ออกใบประเมิน</button>
-            <button className="btn-ghost" onClick={reset}>ล้าง</button>
+            <button className="btn-primary" disabled={!canCommit} onClick={commit}>ยืนยันและบันทึกใบประเมิน</button>
+            <button className="btn-ghost" onClick={reset}>เริ่มรายการใหม่</button>
           </div>
-        </div>
+          <p className="safety-note">ตรวจสอบน้ำหนัก ราคาทอง ค่ากำเหน็จ และยอดสุทธิให้ถูกต้องก่อนยืนยันทุกครั้ง</p>
+        </div>}
+      </div>
+      <div className="wizard-nav">
+        <button className="wizard-back" onClick={() => setStep(v => Math.max(1,v-1))} disabled={step===1}>ย้อนกลับ</button>
+        {step < 4 ? <button className="wizard-next" onClick={() => {
+          if (step === 1) { setStep(2); return; }
+          if (step === 2 && (!(weightBaht > 0) || (txMode === 'trade' && !(oldWeightBaht > 0))) ) { window.alert('กรุณาตรวจสอบน้ำหนักทองให้มากกว่า 0 ก่อนดำเนินการต่อ'); return; }
+          setStep(v => Math.min(4,v+1));
+        }}>ถัดไป <span aria-hidden="true">→</span></button> : <button className="wizard-next" onClick={() => setStep(3)}>แก้ไขข้อมูล</button>}
       </div>
     </section>
     {showCustomer && (
