@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ระบบประเมินราคาทอง</title>
+<title>ทองคำเยาวราช | ระบบประเมินราคา</title>
 
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#b07d0f" />
+<meta name="theme-color" content="#8f1724" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="GoldMark" />
+<meta name="apple-mobile-web-app-title" content="ทองคำเยาวราช" />
 <link rel="apple-touch-icon" href="/icon.svg" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -888,7 +888,36 @@ function TweaksPanel({ children, open, onClose }) {
   if (!open) return null;
   return (
     <>
-      <style>{TWEAK_STYLE}</style>
+      <style>{TWEAK_STYLE}
+/* Yaowarat Gold: speed-first mobile usability layer */
+:root {
+  --gold: #a97818;
+  --gold-bright: #c49a43;
+  --gold-soft: #946715;
+  --gold-deep: #6f4c0c;
+  --gold-glow: rgba(169,120,24,.14);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+}
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body { background: #f7f6f3; }
+button, input, select, textarea { font: inherit; }
+button, [role="button"], input, select { touch-action: manipulation; }
+button { min-height: 42px; }
+input, select { min-height: 42px; }
+:focus-visible { outline: 3px solid rgba(169,120,24,.55); outline-offset: 2px; }
+@media (max-width: 600px) {
+  body { font-size: 15px; }
+  #root { width: 100%; }
+  button { min-height: 44px; }
+  input, select { min-height: 44px; font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+</style>
       <div ref={dragRef} className="twk-panel" style={{ right: 16, bottom: 16 }}>
         <div className="twk-hd" onMouseDown={onDragStart}>
           <b>ตั้งค่า — ผู้จัดการ</b>
@@ -980,7 +1009,7 @@ function SiteHeader({ onTweaks }) {
         <div className="brand">
           <div className="brand-mark"><span className="glyph">G</span></div>
           <div className="brand-text">
-            <div className="name-th">ระบบประเมินราคาทอง</div>
+            <div className="name-th">ทองคำเยาวราช</div>
           </div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
