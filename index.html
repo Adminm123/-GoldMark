@@ -739,6 +739,21 @@ body { overflow-x: hidden; }
   .qw-chip { padding: 8px 14px; font-size: 14px; min-height: 40px; }
   .btn-show-customer { padding: 13px; font-size: 15px; }
 }
+.wizard-head { margin: 0 0 18px; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-2); }
+.wizard-progress { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.wizard-step { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--text-mute); font-size: 12px; }
+.wizard-dot { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border: 1px solid var(--border-bright); border-radius: 50%; font-family: var(--mono); font-weight: 700; }
+.wizard-step.current { color: var(--text); font-weight: 700; }
+.wizard-step.current .wizard-dot, .wizard-step.done .wizard-dot { color: #fff; background: #35658A; border-color: #35658A; }
+.wizard-caption { margin-top: 12px; color: var(--text-mute); font-size: 12px; }
+.wizard-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.wizard-nav button { min-height: 48px; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+.wizard-back { border: 1px solid var(--border-bright); background: transparent; color: var(--text); }
+.wizard-back:disabled { opacity: .35; cursor: not-allowed; }
+.wizard-next { margin-left: auto; border: 1px solid #35658A; background: #35658A; color: #fff; min-width: 132px; }
+.safety-note { margin-top: 12px; color: var(--text-mute); font-size: 12px; line-height: 1.6; }
+@media (max-width: 560px) { .wizard-head { padding: 12px; } .wizard-progress { gap: 3px; } .wizard-step { flex-direction: column; justify-content: center; text-align: center; gap: 4px; font-size: 10px; } .wizard-label { line-height: 1.25; } .wizard-nav button { flex: 1; } }
+
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -1152,21 +1167,6 @@ function getTierFee(weightBaht, tiers, fallback) {
   }
   return Number(fallback) || 0;
 }
-
-.wizard-head { margin: 0 0 18px; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-2); }
-.wizard-progress { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
-.wizard-step { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--text-mute); font-size: 12px; }
-.wizard-dot { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border: 1px solid var(--border-bright); border-radius: 50%; font-family: var(--mono); font-weight: 700; }
-.wizard-step.current { color: var(--text); font-weight: 700; }
-.wizard-step.current .wizard-dot, .wizard-step.done .wizard-dot { color: #fff; background: #35658A; border-color: #35658A; }
-.wizard-caption { margin-top: 12px; color: var(--text-mute); font-size: 12px; }
-.wizard-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
-.wizard-nav button { min-height: 48px; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
-.wizard-back { border: 1px solid var(--border-bright); background: transparent; color: var(--text); }
-.wizard-back:disabled { opacity: .35; cursor: not-allowed; }
-.wizard-next { margin-left: auto; border: 1px solid #35658A; background: #35658A; color: #fff; min-width: 132px; }
-.safety-note { margin-top: 12px; color: var(--text-mute); font-size: 12px; line-height: 1.6; }
-@media (max-width: 560px) { .wizard-head { padding: 12px; } .wizard-progress { gap: 3px; } .wizard-step { flex-direction: column; justify-content: center; text-align: center; gap: 4px; font-size: 10px; } .wizard-label { line-height: 1.25; } .wizard-nav button { flex: 1; } }
 
 /* ── Calculator ── */
 function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
