@@ -1952,12 +1952,13 @@ function useGoldPrice(fallbackBuy, fallbackSell) {
 
   const loadSharedPrice = useCallback(async () => {
     try {
-      const { data, error } = await sb.from(PRICE_TABLE).select('*').eq('id', 1).maybeSingle();
-      if (error) throw error;
-      if (!data) throw new Error('ยังไม่มีราคากลางในระบบ');
-      applyRow(data);
+      const response = await fetch('/api/price?refresh=1', { cache: 'no-store' });
+      const result = await response.json();
+      if (!result.price) throw new Error(result.status || 'ยังไม่มีราคากลางในระบบ');
+      applyRow({ ...result.price, buy_change: result.price.buy_change, sell_change: result.price.sell_change, updated_at: result.updated_at });
+      if (!result.ok) setStatus('error');
     } catch (e) {
-      console.warn('Shared price read failed:', e.message);
+      console.warn('Shared price endpoint failed:', e.message);
       setStatus('error');
     }
   }, [applyRow]);
