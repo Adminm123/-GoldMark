@@ -23,14 +23,14 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
 
           for (const [name, html] of [['index.html', index], ['admin.html', admin]]) {
-            assert.equal((html.match(/<script\\b/g) || []).length, (html.match(/<\\/script>/g) || []).length, name + ': script tags must balance');
-            assert.equal((html.match(/<style\\b/g) || []).length, (html.match(/<\\/style>/g) || []).length, name + ': style tags must balance');
+            assert.equal((html.match(/<script\b/g) || []).length, (html.match(/<\/script>/g) || []).length, name + ': script tags must balance');
+            assert.equal((html.match(/<style\b/g) || []).length, (html.match(/<\/style>/g) || []).length, name + ': style tags must balance');
             assert.match(html, /ทองคำเยาวราช/, name + ': expected brand');
           }
           assert.equal(manifest.short_name, 'ทองคำเยาวราช');
           assert.equal(manifest.display, 'standalone');
           assert.match(sw, /SKIP_CACHE_HOSTS/);
-          assert.match(sw, /if \\(SKIP_CACHE_HOSTS\\.some/);
+          assert.match(sw, /if \(SKIP_CACHE_HOSTS\.some/);
           assert.match(sw, /yaowarat-gold-v2/);
           for (const feature of ["from('assessments')", "from('branches')", "from('employees')", "createClient"]) {
             assert.ok(index.includes(feature), 'index.html missing critical integration: ' + feature);
