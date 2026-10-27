@@ -1,5 +1,0 @@
-{
-  "crons": [
-    { "path": "/api/price?cron=1", "schedule": "0 0 * * *" }
-  ]
-}
