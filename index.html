@@ -2198,8 +2198,10 @@ function App() {
       <main className={`page view-${activeView}`}>
         {activeView==='assessment' ? <>
           <div className="workspace-intro"><div><div className="workspace-kicker">GOLDMARK · WORKSPACE</div><h1>{showCalculator ? 'กรอกข้อมูลประเมิน' : 'ราคาทองวันนี้'}</h1><p>{showCalculator ? 'กรอกข้อมูลให้ครบ ตรวจสอบยอดกับลูกค้าก่อนยืนยัน' : 'ตรวจสอบราคาทองล่าสุด ก่อนเริ่มประเมินให้ลูกค้า'}</p></div><div className={`connection-state ${status==='ok'?'online':'offline'}`}><span></span>{status==='ok'?'ราคาพร้อมใช้งาน':'กำลังตรวจสอบราคา'}</div></div>
-          <PricesSection prices={prices} lastChange={lastChange} status={status} strTime={strTime} onRefresh={refresh} />
-          {showCalculator && <><button type="button" className="btn-ghost" style={{margin:'16px 0 12px'}} onClick={() => setShowCalculator(false)}>← กลับไปหน้าราคาทอง</button><Calculator prices={prices} onCommit={handleCommit} apiStatus={status} apiSell={sell} branch={branch} /></>}
+          {showCalculator ? <>
+            <button type="button" className="btn-ghost" style={{margin:'0 0 12px'}} onClick={() => setShowCalculator(false)}>← กลับไปหน้าราคาทอง</button>
+            <Calculator prices={prices} onCommit={handleCommit} apiStatus={status} apiSell={sell} branch={branch} />
+          </> : <PricesSection prices={prices} lastChange={lastChange} status={status} strTime={strTime} onRefresh={refresh} />}
         </> : <>
           <div className="workspace-intro"><div><div className="workspace-kicker">RECORDS · AUDIT</div><h1>ประวัติใบประเมิน</h1><p>ค้นหา ตรวจสอบ และพิมพ์ใบประเมินที่ยืนยันแล้ว</p></div><div className="history-total"><strong>{fmtInt(history.length)}</strong><span>รายการที่บันทึกในอุปกรณ์นี้</span></div></div>
           <HistorySection records={history} onLookup={r => setActiveReceipt(r)} query={query} setQuery={setQuery} />
