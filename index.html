@@ -1353,34 +1353,25 @@ const QUICK_W = [
   { label: '5 บาท', detail: '20 สลึง', v: '5' },
 ];
 
-function CustomerDisplay({ pricePerBaht, laborFeeNum, discountNum, mode, initWeight, goldType, onClose }) {
-  const modeLabel = mode === 'sell' ? 'ราคาขายออก' : 'ราคารับซื้อ';
-  const feeFor = (v) => {
-    const w = Number(v);
-    if (goldType !== 'jewelry') return laborFeeNum;
-    if (Number.isInteger(w)) return laborFeeNum * w;
-    return laborFeeNum;
-  };
+function CustomerDisplay({ displayWeight, displayTotal, mode, goldType, onClose }) {
+  const modeLabel = mode === 'sell' ? 'ราคาขายออก' : mode === 'buy' ? 'ราคารับซื้อ' : 'ยอดสุทธิเปลี่ยนทอง';
+  const weightLabel = Number(displayWeight) > 0
+    ? (Number(displayWeight) === 1 ? '1 บาท' : Number(displayWeight) === 0.5 ? 'ครึ่งบาท' : Number(displayWeight) === 0.25 ? '1 สลึง' : Number(displayWeight) === 0.75 ? '3 สลึง' : `${fmt(Number(displayWeight), 2)} บาท`)
+    : 'น้ำหนักที่สอบถาม';
 
   return (
     <div className="cust-overlay" onClick={onClose}>
       <div className="cust-box cust-box-wide" onClick={e => e.stopPropagation()}>
         <button className="cust-x" onClick={onClose} aria-label="ปิด">✕</button>
         <div className="cust-type-label">{modeLabel} · {goldType === 'jewelry' ? 'ทองรูปพรรณ' : 'ทองคำแท่ง'} 96.5%</div>
-        <h2 className="cust-heading">ราคาทองตามน้ำหนัก</h2>
-        <p className="cust-subheading">เลือกดูราคาแต่ละน้ำหนักได้จากรายการด้านล่าง</p>
+        <h2 className="cust-heading">ราคาที่ลูกค้าสอบถาม</h2>
         <div className="cust-price-grid cust-price-list">
-          {QUICK_W.map(({ label, v }) => {
-            const total = Math.max(pricePerBaht * Number(v) + feeFor(v) - discountNum, 0);
-            return (
-              <article className="cust-price-card" key={v}>
-                <div className="cust-card-weight">{label}</div>
-                <div className="cust-card-total">฿{fmt(total, 0)}</div>
-              </article>
-            );
-          })}
+          <article className="cust-price-card">
+            <div className="cust-card-weight">{weightLabel}</div>
+            <div className="cust-card-total">฿{fmt(Number(displayTotal) || 0, 0)}</div>
+          </article>
         </div>
-        <p className="cust-disclaimer">ราคาที่แสดงเป็นราคาเบื้องต้น ราคาจริงอาจแตกต่างกันตามลวดลายทอง กรุณาสอบถามพนักงานเพื่อยืนยันราคาก่อนซื้อ</p>
+        <p className="cust-disclaimer">ราคาที่แสดงเป็นราคาเบื้องต้น กรุณาสอบถามพนักงานเพื่อยืนยันราคาก่อนทำรายการ</p>
         <button className="cust-dismiss" onClick={onClose}>ปิดหน้าราคา</button>
       </div>
     </div>
@@ -1756,12 +1747,10 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
     </section>
     {showCustomer && (
       <CustomerDisplay
-        pricePerBaht={calc.pricePerBaht}
-        laborFeeNum={laborOverride !== '' ? (Number(laborOverride) || 0) : getTierFee(1, cfg?.labor_fee_json, cfg?.labor_fee_min ?? 0)}
-        discountNum={discountNum}
+        displayWeight={weightBaht}
+        displayTotal={txMode === 'buy' ? calc.shopReturns : (calc.customerPays > 0 ? calc.customerPays : calc.shopReturns)}
         mode={txMode}
         goldType={goldType}
-        initWeight={unit==='baht' ? weight : '1'}
         onClose={() => setShowCustomer(false)}
       />
     )}
