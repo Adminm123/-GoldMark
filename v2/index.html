@@ -12,14 +12,14 @@ const state={page:'estimate',step:'menu',action:'buy',gold:'jewelry',weight:'1',
 const fmt=n=>Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:2});
 const baht=n=>'฿'+fmt(n);
 const weightName=w=>({0.25:'1 สลึง',0.5:'2 สลึง',0.75:'3 สลึง',1:'1 บาท',2:'2 บาท',4:'4 บาท'}[Number(w)]||w+' บาท');
-function oldValue(x){return Number(x.weight||0)*state.buy*(x.gold==='bar'?1:1-state.deduct/100)}
+function oldValue(x){return Number(x.weight||0)*state.buy*(1-state.deduct/100)}
 function newValue(x){return Math.max(0,Number(x.weight||0)*state.sell+Number(x.labor||0)-Number(x.discount||0))}
 function sumOld(){return state.old.reduce((s,x)=>s+oldValue(x),0)}
 function sumNew(){return state.fresh.reduce((s,x)=>s+newValue(x),0)}
 function net(){return sumNew()-sumOld()}
 function go(step){state.step=step;render()}
 function header(title,desc){return '<h2 class="heading">'+title+'</h2><p class="sub">'+desc+'</p>'}
-function typeCards(){return '<div class="grid">'+[['buy','ซื้อ','คำนวณราคาทองที่ลูกค้าซื้อ'],['sell','ขาย','คำนวณยอดรับซื้อทองเก่า'],['exchange','แลกเปลี่ยน','นำทองเก่ามาแลกทองใหม่'],['deposit','ขายฝาก','คำนวณเงินต้นและดอกเบี้ยขายฝาก']].map(x=>'<button class="choice" data-action="'+x[0]+'"><strong>'+x[1]+'</strong><span>'+x[2]+'</span></button>').join('')+'</div>'}
+function typeCards(){return '<div class="grid">'+[['buy','ซื้อ','ร้านรับซื้อทองจากลูกค้า'],['sell','ขาย','ร้านขายทองให้ลูกค้า'],['exchange','แลกเปลี่ยน','นำทองเก่ามาแลกทองใหม่'],['deposit','ขายฝาก','คำนวณเงินต้นและดอกเบี้ยขายฝาก']].map(x=>'<button class="choice" data-action="'+x[0]+'"><strong>'+x[1]+'</strong><span>'+x[2]+'</span></button>').join('')+'</div>'}
 function render(){const el=document.getElementById('main');document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.page===state.page));document.getElementById('back').classList.toggle('hidden',state.page!=='estimate'||state.step==='menu');document.getElementById('next').classList.toggle('hidden',state.page!=='estimate');
 if(state.page==='history'){el.innerHTML=header('รายการประเมิน','ประวัติทดลองในหน้านี้เท่านั้น ยังไม่เชื่อมฐานข้อมูลจริง')+(state.history.length?state.history.map((x,i)=>'<div class="card"><b>รายการ #'+(state.history.length-i)+'</b><div class="statrow"><span>ประเภท</span><b>'+x.action+'</b></div><div class="statrow"><span>ยอดสุทธิ</span><b>'+x.result+'</b></div></div>').join(''):'<div class="card notice">ยังไม่มีรายการประเมินทดลอง</div>');return}
 if(state.page==='settings'){el.innerHTML=header('ตั้งค่าทดลอง','ราคาเหล่านี้ใช้จำลองหน้าจอเท่านั้น ไม่กระทบราคากลางหรือฐานข้อมูลจริง')+'<div class="card"><label class="label">ราคาขายทองต่อบาท</label><input class="field" id="sell" type="number" value="'+state.sell+'"><label class="label" style="margin-top:12px">ราคารับซื้อทองต่อบาท</label><input class="field" id="buy" type="number" value="'+state.buy+'"><label class="label" style="margin-top:12px">หักทองรูปพรรณ (%)</label><input class="field" id="deduct" type="number" value="'+state.deduct+'"><button class="btn primary" id="saveSettings" style="width:100%;margin-top:15px">บันทึกค่าทดลอง</button></div>';document.getElementById('saveSettings').onclick=()=>{state.sell=+document.getElementById('sell').value||0;state.buy=+document.getElementById('buy').value||0;state.deduct=+document.getElementById('deduct').value||0;render()};return}
