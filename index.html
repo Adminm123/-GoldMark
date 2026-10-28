@@ -678,8 +678,8 @@ body { overflow-x: hidden; }
 .cust-subheading { color: #687786; font-size: 13px; margin: 0 0 22px; }
 .cust-price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 12px 0 18px; text-align: left; }
 .cust-price-card { border: 1px solid #D9E3EB; background: #FCFDFE; border-radius: 15px; padding: 16px; min-width: 0; }
-.cust-card-weight { color: var(--brand-blue-deep); font-weight: 700; font-size: 16px; margin-bottom: 8px; }
-.cust-card-total { color: var(--brand-blue); font-size: clamp(22px, 4vw, 32px); font-weight: 750; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.cust-card-weight { color: #687786; font-weight: 500; font-size: 13px; margin-top: 6px; }
+.cust-card-total { color: var(--brand-blue-deep); font-size: clamp(30px, 5vw, 42px); line-height: 1.15; font-weight: 800; letter-spacing: -.035em; overflow-wrap: anywhere; }
 .cust-fee-label { display: flex; flex-direction: column; gap: 5px; margin-top: 12px; color: #647383; font-size: 12px; }
 .cust-fee-label input { width: 100%; box-sizing: border-box; min-height: 42px; border: 1px solid #C8D6E1; border-radius: 9px; padding: 8px 10px; font: inherit; color: #243746; background: white; }
 .cust-fee-label small { font-size: 10px; color: #71808D; line-height: 1.4; }
@@ -1380,8 +1380,8 @@ function CustomerDisplay({ pricePerBaht, laborFeeNum, discountNum, mode, initWei
             const isFullBaht = Number.isInteger(Number(v));
             return (
               <article className="cust-price-card" key={v}>
-                <div className="cust-card-weight">{item?.label || v + ' บาท'}</div>
                 <div className="cust-card-total">฿{fmt(total, 0)}</div>
+                <div className="cust-card-weight">{item?.label || v + ' บาท'}</div>
                 {goldType === 'jewelry' && (
                   <label className="cust-fee-label">
                     <span>ค่ากำเหน็จ (บาท)</span>
