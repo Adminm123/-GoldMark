@@ -1056,6 +1056,23 @@ button:active { transform: scale(.985); }
   .unit-pick button { min-width: 38px; }
 }
 
+
+/* Customer display compare workflow */
+.cust-card-title{font-size:12px;color:var(--muted,#9a9a9a);margin-bottom:7px}
+.cust-compare-options{display:grid;gap:12px;margin:18px 0;text-align:left}
+.cust-subheading{margin:4px 0;font-weight:700;font-size:14px}
+.cust-chips{display:flex;gap:8px;flex-wrap:wrap}
+.cust-chips button{border:1px solid var(--border,#ddd);border-radius:10px;padding:10px 14px;background:transparent;color:inherit;cursor:pointer}
+.cust-chips button.active{border-color:var(--gold,#b68b2c);background:rgba(182,139,44,.14);font-weight:700}
+.cust-weight-input{display:grid;gap:8px}
+.cust-weight-input input,.cust-extra-inputs input{box-sizing:border-box;width:100%;min-width:0;padding:11px 12px;border:1px solid var(--border,#ddd);border-radius:9px;background:var(--surface,#fff);color:inherit;font:inherit}
+.cust-extra-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cust-extra-inputs label{display:grid;gap:6px;font-size:12px;color:var(--muted,#888)}
+.cust-compare-preview{display:grid;gap:5px;padding:14px;border:1px solid var(--gold,#b68b2c);border-radius:12px;background:rgba(182,139,44,.08)}
+.cust-compare-preview strong{font-size:26px}
+.cust-compare-preview small{font-size:11px;color:var(--muted,#888)}
+@media(max-width:600px){.cust-extra-inputs{grid-template-columns:1fr}.cust-chips button{flex:1}}
+
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -1405,54 +1422,91 @@ const QUICK_W = [
   { label: '5 บาท', detail: '20 สลึง', v: '5' },
 ];
 
-function CustomerDisplay({ displayWeight, displayTotal, pricePerBaht, laborFeeNum, discountNum, mode, goldType, onClose }) {
+function CustomerDisplay({ displayWeight, displayTotal, pricePerBaht, sellPrice, buyPrice, laborFeeNum, discountNum, mode, goldType, onClose }) {
   const [compareOpen, setCompareOpen] = useState(false);
-  const [compareWeights, setCompareWeights] = useState([]);
+  const [compareAction, setCompareAction] = useState('');
+  const [compareWeight, setCompareWeight] = useState('1');
+  const [compareUnit, setCompareUnit] = useState('baht');
+  const [compareLabor, setCompareLabor] = useState('');
+  const [compareDiscount, setCompareDiscount] = useState('0');
   const modeLabel = mode === 'sell' ? 'ราคาขายออก' : mode === 'buy' ? 'ราคารับซื้อ' : 'ยอดสุทธิเปลี่ยนทอง';
   const labelFor = (value) => {
     const w = Number(value);
-    if (w === 1) return '1 บาท';
-    if (w === 0.5) return 'ครึ่งบาท';
-    if (w === 0.25) return '1 สลึง';
-    if (w === 0.75) return '3 สลึง';
+    if (Math.abs(w - 1) < 0.0001) return '1 บาท';
+    if (Math.abs(w - 0.5) < 0.0001) return 'ครึ่งบาท';
+    if (Math.abs(w - 0.25) < 0.0001) return '1 สลึง';
+    if (Math.abs(w - 0.75) < 0.0001) return '3 สลึง';
     return `${fmt(w, 2)} บาท`;
   };
-  const totalFor = (value) => {
-    const w = Number(value);
-    if (mode === 'buy') return Math.max(Number(pricePerBaht) * w, 0);
-    if (mode === 'trade') return Number(displayTotal) || 0;
-    const fee = goldType === 'jewelry' && Number.isInteger(w) ? Number(laborFeeNum || 0) * w : Number(laborFeeNum || 0);
-    return Math.max(Number(pricePerBaht) * w + fee - Number(discountNum || 0), 0);
-  };
-  const shown = [{ v: Number(displayWeight), label: labelFor(displayWeight), total: Number(displayTotal) || 0 },
-    ...compareWeights.map(v => ({ v, label: labelFor(v), total: totalFor(v) }))];
+  const compareWeightBaht = toBaht(compareWeight, compareUnit);
+  const defaultCompareLabor = Number(laborFeeNum || 0);
+  const compareLaborNum = compareLabor === '' ? defaultCompareLabor : (Number(compareLabor) || 0);
+  const compareDiscountNum = Number(compareDiscount) || 0;
+  const compareTotal = compareAction === 'sellOld'
+    ? Math.max(Number(buyPrice || 0) * compareWeightBaht, 0)
+    : Math.max(Number(sellPrice || 0) * compareWeightBaht + compareLaborNum - compareDiscountNum, 0);
+  const compareTitle = compareAction === 'sellOld' ? 'ขายทองเก่าให้ร้าน' : 'ซื้อทองใหม่จากร้าน';
+  const shown = [{ label: labelFor(displayWeight), total: Number(displayTotal) || 0, title: 'รายการที่ลูกค้าสอบถาม' }];
+  if (compareOpen && compareAction && compareWeightBaht > 0) {
+    shown.push({ label: labelFor(compareWeightBaht), total: compareTotal, title: compareTitle });
+  }
 
   return (
     <div className="cust-overlay" onClick={onClose}>
       <div className="cust-box cust-box-wide" onClick={e => e.stopPropagation()}>
         <button className="cust-x" onClick={onClose} aria-label="ปิด">✕</button>
         <div className="cust-type-label">{modeLabel} · {goldType === 'jewelry' ? 'ทองรูปพรรณ' : 'ทองคำแท่ง'} 96.5%</div>
-        <h2 className="cust-heading">{compareOpen ? 'เปรียบเทียบราคาตามน้ำหนัก' : 'ราคาที่ลูกค้าสอบถาม'}</h2>
+        <h2 className="cust-heading">ราคาที่ลูกค้าสอบถาม</h2>
         <div className="cust-price-grid cust-price-list">
           {shown.map((item, index) => (
             <article className="cust-price-card" key={index}>
+              {item.title && <div className="cust-card-title">{item.title}</div>}
               <div className="cust-card-weight">{item.label}</div>
               <div className="cust-card-total">฿{fmt(item.total, 0)}</div>
             </article>
           ))}
         </div>
-        {compareOpen && (
+        {!compareOpen ? (
+          <button className="cust-dismiss" onClick={() => setCompareOpen(true)}>เปรียบเทียบราคา</button>
+        ) : (
           <div className="cust-compare-options">
-            <p className="cust-subheading">เลือกน้ำหนักอื่นเพื่อเปรียบเทียบ</p>
+            <p className="cust-subheading">ต้องการเปรียบเทียบรายการแบบไหน?</p>
             <div className="cust-chips">
-              {QUICK_W.filter(({v}) => Number(v) !== Number(displayWeight)).map(({label,v}) => (
-                <button key={v} type="button" className={compareWeights.includes(Number(v)) ? 'active' : ''} onClick={() => setCompareWeights(prev => prev.includes(Number(v)) ? prev.filter(x => x !== Number(v)) : [...prev, Number(v)])}>{label}</button>
-              ))}
+              <button type="button" className={compareAction === 'sellOld' ? 'active' : ''} onClick={() => setCompareAction('sellOld')}>ขายทองเก่าให้ร้าน</button>
+              <button type="button" className={compareAction === 'buyNew' ? 'active' : ''} onClick={() => setCompareAction('buyNew')}>ซื้อทองใหม่จากร้าน</button>
             </div>
+            {compareAction && (
+              <>
+                <p className="cust-subheading">ระบุน้ำหนักทองที่ต้องการเปรียบเทียบ</p>
+                <div className="cust-weight-input">
+                  <input aria-label="น้ำหนักทองที่ใช้เปรียบเทียบ" type="number" min="0.01" step="any" value={compareWeight} onChange={e => setCompareWeight(e.target.value)} />
+                  <div className="cust-chips">
+                    {[['baht','บาท'],['salueng','สลึง'],['gram','กรัม']].map(([u,label]) => (
+                      <button key={u} type="button" className={compareUnit === u ? 'active' : ''} onClick={() => setCompareUnit(u)}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+                {compareAction === 'buyNew' && (
+                  <div className="cust-extra-inputs">
+                    <label>ค่ากำเหน็จ (บาท)
+                      <input type="number" min="0" value={compareLabor} placeholder={String(defaultCompareLabor)} onChange={e => setCompareLabor(e.target.value)} />
+                    </label>
+                    <label>ส่วนลด (บาท)
+                      <input type="number" min="0" value={compareDiscount} onChange={e => setCompareDiscount(e.target.value)} />
+                    </label>
+                  </div>
+                )}
+                <div className="cust-compare-preview">
+                  <span>{compareTitle}</span>
+                  <strong>฿{fmt(compareTotal, 0)}</strong>
+                  <small>{compareAction === 'sellOld' ? 'คำนวณจากราคารับซื้อ × น้ำหนัก' : 'คำนวณจากราคาขายออก × น้ำหนัก + ค่ากำเหน็จ − ส่วนลด'}</small>
+                </div>
+              </>
+            )}
           </div>
         )}
         <p className="cust-disclaimer">ราคาที่แสดงเป็นราคาเบื้องต้น กรุณาสอบถามพนักงานเพื่อยืนยันราคาก่อนทำรายการ</p>
-        <button className="cust-dismiss" onClick={() => { if (!compareOpen) setCompareOpen(true); else { setCompareOpen(false); setCompareWeights([]); } }}>{compareOpen ? 'เสร็จสิ้นการเปรียบเทียบ' : 'เปรียบเทียบราคา'}</button>
+        {compareOpen && <button className="cust-dismiss" onClick={() => { setCompareOpen(false); setCompareAction(''); }}>เสร็จสิ้นการเปรียบเทียบ</button>}
         <button className="cust-dismiss" onClick={onClose}>ปิดหน้าราคา</button>
       </div>
     </div>
@@ -1844,6 +1898,8 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
         displayWeight={weightBaht}
         displayTotal={txMode === 'buy' ? calc.shopReturns : (calc.customerPays > 0 ? calc.customerPays : calc.shopReturns)}
         pricePerBaht={calc.pricePerBaht}
+        sellPrice={sellPrice}
+        buyPrice={buyPrice}
         laborFeeNum={calc.laborNum}
         discountNum={discountNum}
         mode={txMode}
