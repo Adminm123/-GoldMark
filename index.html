@@ -1353,25 +1353,54 @@ const QUICK_W = [
   { label: '5 บาท', detail: '20 สลึง', v: '5' },
 ];
 
-function CustomerDisplay({ displayWeight, displayTotal, mode, goldType, onClose }) {
+function CustomerDisplay({ displayWeight, displayTotal, pricePerBaht, laborFeeNum, discountNum, mode, goldType, onClose }) {
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareWeights, setCompareWeights] = useState([]);
   const modeLabel = mode === 'sell' ? 'ราคาขายออก' : mode === 'buy' ? 'ราคารับซื้อ' : 'ยอดสุทธิเปลี่ยนทอง';
-  const weightLabel = Number(displayWeight) > 0
-    ? (Number(displayWeight) === 1 ? '1 บาท' : Number(displayWeight) === 0.5 ? 'ครึ่งบาท' : Number(displayWeight) === 0.25 ? '1 สลึง' : Number(displayWeight) === 0.75 ? '3 สลึง' : `${fmt(Number(displayWeight), 2)} บาท`)
-    : 'น้ำหนักที่สอบถาม';
+  const labelFor = (value) => {
+    const w = Number(value);
+    if (w === 1) return '1 บาท';
+    if (w === 0.5) return 'ครึ่งบาท';
+    if (w === 0.25) return '1 สลึง';
+    if (w === 0.75) return '3 สลึง';
+    return `${fmt(w, 2)} บาท`;
+  };
+  const totalFor = (value) => {
+    const w = Number(value);
+    if (mode === 'buy') return Math.max(Number(pricePerBaht) * w, 0);
+    if (mode === 'trade') return Number(displayTotal) || 0;
+    const fee = goldType === 'jewelry' && Number.isInteger(w) ? Number(laborFeeNum || 0) * w : Number(laborFeeNum || 0);
+    return Math.max(Number(pricePerBaht) * w + fee - Number(discountNum || 0), 0);
+  };
+  const shown = [{ v: Number(displayWeight), label: labelFor(displayWeight), total: Number(displayTotal) || 0 },
+    ...compareWeights.map(v => ({ v, label: labelFor(v), total: totalFor(v) }))];
 
   return (
     <div className="cust-overlay" onClick={onClose}>
       <div className="cust-box cust-box-wide" onClick={e => e.stopPropagation()}>
         <button className="cust-x" onClick={onClose} aria-label="ปิด">✕</button>
         <div className="cust-type-label">{modeLabel} · {goldType === 'jewelry' ? 'ทองรูปพรรณ' : 'ทองคำแท่ง'} 96.5%</div>
-        <h2 className="cust-heading">ราคาที่ลูกค้าสอบถาม</h2>
+        <h2 className="cust-heading">{compareOpen ? 'เปรียบเทียบราคาตามน้ำหนัก' : 'ราคาที่ลูกค้าสอบถาม'}</h2>
         <div className="cust-price-grid cust-price-list">
-          <article className="cust-price-card">
-            <div className="cust-card-weight">{weightLabel}</div>
-            <div className="cust-card-total">฿{fmt(Number(displayTotal) || 0, 0)}</div>
-          </article>
+          {shown.map((item, index) => (
+            <article className="cust-price-card" key={index}>
+              <div className="cust-card-weight">{item.label}</div>
+              <div className="cust-card-total">฿{fmt(item.total, 0)}</div>
+            </article>
+          ))}
         </div>
+        {compareOpen && (
+          <div className="cust-compare-options">
+            <p className="cust-subheading">เลือกน้ำหนักอื่นเพื่อเปรียบเทียบ</p>
+            <div className="cust-chips">
+              {QUICK_W.filter(({v}) => Number(v) !== Number(displayWeight)).map(({label,v}) => (
+                <button key={v} type="button" className={compareWeights.includes(Number(v)) ? 'active' : ''} onClick={() => setCompareWeights(prev => prev.includes(Number(v)) ? prev.filter(x => x !== Number(v)) : [...prev, Number(v)])}>{label}</button>
+              ))}
+            </div>
+          </div>
+        )}
         <p className="cust-disclaimer">ราคาที่แสดงเป็นราคาเบื้องต้น กรุณาสอบถามพนักงานเพื่อยืนยันราคาก่อนทำรายการ</p>
+        <button className="cust-dismiss" onClick={() => { if (!compareOpen) setCompareOpen(true); else { setCompareOpen(false); setCompareWeights([]); } }}>{compareOpen ? 'เสร็จสิ้นการเปรียบเทียบ' : 'เปรียบเทียบราคา'}</button>
         <button className="cust-dismiss" onClick={onClose}>ปิดหน้าราคา</button>
       </div>
     </div>
@@ -1749,6 +1778,9 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
       <CustomerDisplay
         displayWeight={weightBaht}
         displayTotal={txMode === 'buy' ? calc.shopReturns : (calc.customerPays > 0 ? calc.customerPays : calc.shopReturns)}
+        pricePerBaht={calc.pricePerBaht}
+        laborFeeNum={calc.laborNum}
+        discountNum={discountNum}
         mode={txMode}
         goldType={goldType}
         onClose={() => setShowCustomer(false)}
