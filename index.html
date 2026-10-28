@@ -974,6 +974,29 @@ button:active { transform: scale(.985); }
   .page .field-group{gap:15px}
 }
 
+
+/* Mobile: keep gold prices prominent and put primary navigation within thumb reach */
+@media(max-width:700px){
+  .app-nav{
+    position:fixed!important;top:auto!important;bottom:0;left:0;right:0;z-index:1000;
+    display:flex;justify-content:stretch;gap:8px;
+    padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.97);border-top:1px solid #e3e7ee;border-bottom:0;
+    box-shadow:0 -6px 24px rgba(16,24,40,.09);backdrop-filter:blur(18px)
+  }
+  .app-nav button{flex:1;min-height:48px;border-radius:12px;font-size:13px}
+  .app-nav button .nav-symbol{font-size:18px}
+  .page{padding-bottom:calc(88px + env(safe-area-inset-bottom))!important}
+  .workspace-intro{margin:0 0 8px!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:8px}
+  .workspace-kicker,.workspace-intro p{display:none!important}
+  .workspace-intro h1{font-size:19px!important}
+  .connection-state{align-self:auto!important;white-space:nowrap;font-size:10px!important;padding:5px 8px!important}
+  .view-history .workspace-intro{align-items:flex-start!important}
+}
+@media(min-width:701px){
+  .app-nav{position:sticky;top:52px}
+}
+
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
