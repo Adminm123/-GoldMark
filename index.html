@@ -1429,6 +1429,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
   const [laborOverride, setLaborOverride] = useState('');
   const [discount, setDiscount] = useState('0');
   const [showCustomer, setShowCustomer] = useState(false);
+  const [draftItems, setDraftItems] = useState([]);
   const [step, setStep] = useState(1);
   const stepCount = txMode === 'buy' ? 3 : 4;
   const stepTitles = txMode === 'buy' ? ['ประเภทรายการ','ชนิดและน้ำหนักทอง','ตรวจสอบยอด'] : ['ประเภทรายการ','ชนิดและน้ำหนักทอง', txMode === 'trade' ? 'รายละเอียดการเปลี่ยนทอง' : 'ค่ากำเหน็จและส่วนลด','ตรวจสอบยอด'];
@@ -1520,27 +1521,31 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
   const canCommit  = !apiOffline && weightBaht > 0 && hasResult &&
     (txMode !== 'trade' || oldWeightBaht > 0);
 
+  const buildCurrentItem = () => ({
+    mode: txMode, type: goldType, weight: Number(weight), unit, weightBaht,
+    pricePerBaht: calc.pricePerBaht, labor: 0, laborFee: calc.laborNum,
+    basePrice: calc.base, discount: discountNum, oldWeight: Number(oldWeight)||0, oldUnit, oldWeightBaht,
+    oldPricePerBaht: buyPrice, oldBuy: calc.oldValue,
+    total: txMode === 'buy' ? calc.shopReturns : (calc.customerPays > 0 ? calc.customerPays : calc.shopReturns),
+    descAction: calc.descAction, apiSell, tradeType: tradeType ?? undefined,
+  });
+  const addCurrentItem = () => {
+    if (!canCommit) return;
+    setDraftItems(prev => [...prev, buildCurrentItem()]);
+    setTxMode('sell'); setGoldType('bar'); setWeight('1'); setUnit('baht');
+    setOldWeight('1'); setOldUnit('baht'); setLaborOverride(''); setDiscount('0'); setStep(1); setShowCustomer(false);
+  };
+  const removeDraftItem = index => setDraftItems(prev => prev.filter((_,i) => i !== index));
   const commit = () => {
     if (!canCommit) return;
-    const amount = txMode === 'buy' ? calc.shopReturns : (calc.customerPays > 0 ? calc.customerPays : calc.shopReturns);
-    const direction = txMode === 'buy' || calc.shopReturns > 0 ? 'ร้านจ่ายให้ลูกค้า' : 'ลูกค้าชำระ';
-    const confirmText = `ยืนยันบันทึกรายการนี้หรือไม่?\\n\\nรายการ: ${calc.descAction}\\nชนิดทอง: ${goldType === 'bar' ? 'ทองคำแท่ง' : 'ทองรูปพรรณ'}\\nน้ำหนัก: ${fmt(weightBaht,2)} บาท\\nราคาทองอ้างอิง: ${fmt(calc.pricePerBaht,0)} บาท/บาทน้ำหนัก\\n${direction}: ${fmt(amount,0)} บาท\\n\\nกรุณาตรวจสอบตัวเลขก่อนยืนยัน`;
-    if (!window.confirm(confirmText)) return;
-    onCommit({
-      mode: txMode, type: goldType,
-      weight: Number(weight), unit, weightBaht,
-      pricePerBaht: calc.pricePerBaht,
-      labor: 0, laborFee: calc.laborNum,
-      basePrice: calc.base, discount: discountNum,
-      oldWeight: Number(oldWeight)||0, oldUnit, oldWeightBaht,
-      oldPricePerBaht: buyPrice, oldBuy: calc.oldValue,
-      total: txMode === 'buy' ? calc.shopReturns : calc.customerPays,
-      descAction: calc.descAction, apiSell,
-      tradeType: tradeType ?? undefined,
-    });
+    const current = buildCurrentItem();
+    const allItems = [...draftItems, current];
+    const lines = allItems.map((x,i) => (i+1)+'. '+x.descAction+' · '+fmt(x.weightBaht,2)+' บาท · ฿'+fmt(x.total,0)).join('\n');
+    const total = allItems.reduce((n,x) => n + Number(x.total||0), 0);
+    if (!window.confirm('ยืนยันบันทึกธุรกรรม '+allItems.length+' รายการหรือไม่?\n\n'+lines+'\n\nยอดรวมรายการ: '+fmt(total,0)+' บาท')) return;
+    onCommit({...current, items: allItems, transactionTotal: total, itemCount: allItems.length});
   };
-
-  const reset = () => { setWeight('1'); setOldWeight('1'); setDiscount('0'); setLaborOverride(''); setStep(1); };
+  const reset = () => { setWeight('1'); setOldWeight('1'); setDiscount('0'); setLaborOverride(''); setStep(1); setDraftItems([]); };
 
   /* ─ UI ─ */
   const UnitPick = ({ val, setVal }) => (
@@ -1758,7 +1763,15 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
               ⚠ ราคาไม่ได้มาจาก API · ไม่สามารถบันทึกได้
             </div>
           )}
+          {draftItems.length > 0 && <div style={{margin:"16px 0",padding:14,border:"1px solid var(--border)",borderRadius:10}}>
+            <div style={{fontWeight:700,marginBottom:8}}>รายการในธุรกรรม ({draftItems.length})</div>
+            {draftItems.map((item,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",gap:8,padding:"7px 0",borderBottom:"1px solid var(--border)",fontSize:12}}>
+              <span>{i+1}. {item.descAction} · {fmt(item.weightBaht,2)} บ. · ฿{fmt(item.total,0)}</span><button type="button" className="btn-ghost" onClick={()=>removeDraftItem(i)}>ลบ</button>
+            </div>)}
+            <div style={{marginTop:8,fontWeight:700}}>รวมรายการที่เพิ่ม ฿{fmt(draftItems.reduce((n,x)=>n+x.total,0),0)}</div>
+          </div>}
           <div className="action-row">
+            <button className="btn-ghost" disabled={!canCommit} onClick={addCurrentItem}>＋ เพิ่มรายการนี้ แล้วทำรายการต่อ</button>
             <button className="btn-primary" disabled={!canCommit} onClick={commit}>ยืนยันและบันทึกใบประเมิน</button>
             <button className="btn-ghost" onClick={reset}>เริ่มรายการใหม่</button>
           </div>
