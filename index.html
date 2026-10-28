@@ -851,6 +851,66 @@ button:active { transform: scale(.985); }
   .transaction-card { min-height: 82px !important; padding: 13px !important; }
 }
 
+
+/* ── Focused workflow / history separated from assessment ── */
+.app-nav{position:sticky;top:52px;z-index:40;display:flex;justify-content:center;gap:8px;padding:10px 20px;background:rgba(255,255,255,.94);border-bottom:1px solid #e3e7ee;backdrop-filter:blur(16px)}
+.app-nav button{display:flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:0 18px;border:1px solid transparent;border-radius:12px;background:transparent;color:#667085;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.app-nav button.active{background:#8f1724;color:#fff;border-color:#8f1724;box-shadow:0 4px 12px rgba(143,23,36,.16)}
+.app-nav button:not(.active):hover{background:#f5f6f8;color:#172033}
+.nav-symbol{font-size:20px;line-height:1}.nav-count{font-size:11px;min-width:23px;padding:2px 6px;border-radius:99px;background:rgba(143,23,36,.08);color:#8f1724}.app-nav button.active .nav-count{background:rgba(255,255,255,.2);color:#fff}
+.workspace-intro{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:4px 0 24px}
+.workspace-kicker{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#9a6a13;margin-bottom:7px}
+.workspace-intro h1{font-size:clamp(25px,3vw,34px);line-height:1.25;letter-spacing:-.035em;color:#172033;margin:0;font-weight:700}
+.workspace-intro p{margin:8px 0 0;color:#667085;font-size:13px;line-height:1.6}
+.connection-state{display:flex;align-items:center;gap:8px;flex-shrink:0;border:1px solid #e3e7ee;border-radius:999px;padding:8px 12px;background:#fff;color:#667085;font-size:11px;font-weight:600}
+.connection-state>span{width:7px;height:7px;border-radius:50%;background:#d97706}.connection-state.online>span{background:#159947;box-shadow:0 0 0 3px rgba(21,153,71,.1)}
+.history-total{display:flex;flex-direction:column;align-items:flex-end;gap:2px;color:#667085;font-size:11px}.history-total strong{font:600 26px 'IBM Plex Mono',monospace;color:#172033}
+.view-history .history-section{margin-top:0!important}.view-history .section-head{margin-top:0!important}
+.page{max-width:1100px!important;padding-top:24px!important}
+.page .prices{box-shadow:0 8px 28px rgba(16,24,40,.06)!important}
+.page .price-card,.page .calc-form,.page .calc-result,.page .chart-card{box-shadow:0 8px 28px rgba(16,24,40,.055)!important}
+.page .calc-layout{align-items:start;gap:18px}
+.page .calc-form,.page .calc-result{border-radius:20px!important;padding:clamp(18px,2.5vw,28px)!important}
+.page .field-group{gap:22px}
+.page .field label{font-family:'Noto Serif Thai',sans-serif;font-size:13px;letter-spacing:0;text-transform:none;color:#667085}
+.page .field label .th{font-size:15px;color:#172033;font-weight:600}
+.page .seg button{min-height:44px;font-size:14px}
+.page .weight-input{min-height:58px;border-radius:13px;border-color:#d3dbe6}
+.page .weight-input input{font-size:28px;color:#172033}
+.page .weight-input .unit-pick button{min-height:50px;font-size:13px}
+.page .simple-input{border-radius:12px}.page .simple-input input{min-height:48px;font-size:17px}
+.page .wizard-head{border:1px solid #e3e7ee;border-radius:16px;background:#fff;box-shadow:0 4px 16px rgba(16,24,40,.03)}
+.page .wizard-step.current{color:#8f1724}.page .wizard-step.current .wizard-dot,.page .wizard-step.done .wizard-dot{background:#8f1724;border-color:#8f1724}
+.page .wizard-next{background:#8f1724;border-color:#8f1724;border-radius:12px;min-height:50px}
+.page .wizard-back{border-radius:12px;min-height:50px}
+.page .transaction-card{border-radius:16px;min-height:78px}
+.page .transaction-card.selected{border-color:#8f1724;background:#fff7f7;box-shadow:0 0 0 2px rgba(143,23,36,.06)}
+.page .transaction-icon{background:#f8e9eb;color:#8f1724;border-radius:13px}
+.page .result-amount{font-size:clamp(36px,4.5vw,50px);overflow-wrap:anywhere}
+.page .btn-show-customer{min-height:48px;border-radius:12px;background:#fff7f7;border-color:#e9c7cb;color:#8f1724}
+.page .section-head h2{font-size:20px!important}
+.history-search{gap:12px!important}.history-search .search-input input{min-height:46px;border-radius:12px}
+.history-table{border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:14px;background:#fff}
+.history-table th{background:#f7f8fa}.history-table td,.history-table th{border-bottom:1px solid #eef0f4}
+@media(max-width:700px){
+ .app-nav{top:52px;padding:8px 12px;gap:6px}
+ .app-nav button{flex:1;min-width:0;padding:0 8px;font-size:12px;gap:6px}
+ .workspace-intro{align-items:flex-start;flex-direction:column;margin:0 0 18px}
+ .connection-state,.history-total{align-self:flex-start;align-items:flex-start}
+ .page{padding:18px 14px 40px!important}
+ .page .calc-layout{grid-template-columns:minmax(0,1fr);gap:12px}
+ .page .calc-form,.page .calc-result{padding:17px!important}
+ .page .wizard-head{padding:12px}
+ .page .wizard-caption{font-size:11px}
+ .page .price-card{padding:22px 18px}
+ .page .price-row{gap:18px}
+ .page .price-row .col .value{font-size:clamp(25px,7vw,36px)}
+ .page .price-card .type-th{font-size:19px;margin-bottom:18px}
+ .page .result-amount{font-size:clamp(32px,9vw,44px)}
+ .view-history .history-section{overflow-x:auto}
+ .history-table{min-width:850px}
+}
+@media(prefers-reduced-motion:reduce){.page>section{animation:none!important}*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -1018,68 +1078,7 @@ function TweaksPanel({ children, open, onClose }) {
   if (!open) return null;
   return (
     <>
-      <style>{TWEAK_STYLE}
-/* ── Focused workflow / history separated from assessment ── */
-.app-nav{position:sticky;top:52px;z-index:40;display:flex;justify-content:center;gap:8px;padding:10px 20px;background:rgba(255,255,255,.94);border-bottom:1px solid #e3e7ee;backdrop-filter:blur(16px)}
-.app-nav button{display:flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:0 18px;border:1px solid transparent;border-radius:12px;background:transparent;color:#667085;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
-.app-nav button.active{background:#8f1724;color:#fff;border-color:#8f1724;box-shadow:0 4px 12px rgba(143,23,36,.16)}
-.app-nav button:not(.active):hover{background:#f5f6f8;color:#172033}
-.nav-symbol{font-size:20px;line-height:1}.nav-count{font-size:11px;min-width:23px;padding:2px 6px;border-radius:99px;background:rgba(143,23,36,.08);color:#8f1724}.app-nav button.active .nav-count{background:rgba(255,255,255,.2);color:#fff}
-.workspace-intro{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:4px 0 24px}
-.workspace-kicker{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#9a6a13;margin-bottom:7px}
-.workspace-intro h1{font-size:clamp(25px,3vw,34px);line-height:1.25;letter-spacing:-.035em;color:#172033;margin:0;font-weight:700}
-.workspace-intro p{margin:8px 0 0;color:#667085;font-size:13px;line-height:1.6}
-.connection-state{display:flex;align-items:center;gap:8px;flex-shrink:0;border:1px solid #e3e7ee;border-radius:999px;padding:8px 12px;background:#fff;color:#667085;font-size:11px;font-weight:600}
-.connection-state>span{width:7px;height:7px;border-radius:50%;background:#d97706}.connection-state.online>span{background:#159947;box-shadow:0 0 0 3px rgba(21,153,71,.1)}
-.history-total{display:flex;flex-direction:column;align-items:flex-end;gap:2px;color:#667085;font-size:11px}.history-total strong{font:600 26px 'IBM Plex Mono',monospace;color:#172033}
-.view-history .history-section{margin-top:0!important}.view-history .section-head{margin-top:0!important}
-.page{max-width:1100px!important;padding-top:24px!important}
-.page .prices{box-shadow:0 8px 28px rgba(16,24,40,.06)!important}
-.page .price-card,.page .calc-form,.page .calc-result,.page .chart-card{box-shadow:0 8px 28px rgba(16,24,40,.055)!important}
-.page .calc-layout{align-items:start;gap:18px}
-.page .calc-form,.page .calc-result{border-radius:20px!important;padding:clamp(18px,2.5vw,28px)!important}
-.page .field-group{gap:22px}
-.page .field label{font-family:'Noto Serif Thai',sans-serif;font-size:13px;letter-spacing:0;text-transform:none;color:#667085}
-.page .field label .th{font-size:15px;color:#172033;font-weight:600}
-.page .seg button{min-height:44px;font-size:14px}
-.page .weight-input{min-height:58px;border-radius:13px;border-color:#d3dbe6}
-.page .weight-input input{font-size:28px;color:#172033}
-.page .weight-input .unit-pick button{min-height:50px;font-size:13px}
-.page .simple-input{border-radius:12px}.page .simple-input input{min-height:48px;font-size:17px}
-.page .wizard-head{border:1px solid #e3e7ee;border-radius:16px;background:#fff;box-shadow:0 4px 16px rgba(16,24,40,.03)}
-.page .wizard-step.current{color:#8f1724}.page .wizard-step.current .wizard-dot,.page .wizard-step.done .wizard-dot{background:#8f1724;border-color:#8f1724}
-.page .wizard-next{background:#8f1724;border-color:#8f1724;border-radius:12px;min-height:50px}
-.page .wizard-back{border-radius:12px;min-height:50px}
-.page .transaction-card{border-radius:16px;min-height:78px}
-.page .transaction-card.selected{border-color:#8f1724;background:#fff7f7;box-shadow:0 0 0 2px rgba(143,23,36,.06)}
-.page .transaction-icon{background:#f8e9eb;color:#8f1724;border-radius:13px}
-.page .result-amount{font-size:clamp(36px,4.5vw,50px);overflow-wrap:anywhere}
-.page .btn-show-customer{min-height:48px;border-radius:12px;background:#fff7f7;border-color:#e9c7cb;color:#8f1724}
-.page .section-head h2{font-size:20px!important}
-.history-search{gap:12px!important}.history-search .search-input input{min-height:46px;border-radius:12px}
-.history-table{border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:14px;background:#fff}
-.history-table th{background:#f7f8fa}.history-table td,.history-table th{border-bottom:1px solid #eef0f4}
-@media(max-width:700px){
- .app-nav{top:52px;padding:8px 12px;gap:6px}
- .app-nav button{flex:1;min-width:0;padding:0 8px;font-size:12px;gap:6px}
- .workspace-intro{align-items:flex-start;flex-direction:column;margin:0 0 18px}
- .connection-state,.history-total{align-self:flex-start;align-items:flex-start}
- .page{padding:18px 14px 40px!important}
- .page .calc-layout{grid-template-columns:minmax(0,1fr);gap:12px}
- .page .calc-form,.page .calc-result{padding:17px!important}
- .page .wizard-head{padding:12px}
- .page .wizard-caption{font-size:11px}
- .page .price-card{padding:22px 18px}
- .page .price-row{gap:18px}
- .page .price-row .col .value{font-size:clamp(25px,7vw,36px)}
- .page .price-card .type-th{font-size:19px;margin-bottom:18px}
- .page .result-amount{font-size:clamp(32px,9vw,44px)}
- .view-history .history-section{overflow-x:auto}
- .history-table{min-width:850px}
-}
-@media(prefers-reduced-motion:reduce){.page>section{animation:none!important}*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
-
-</style>
+      <style>{TWEAK_STYLE}</style>
       <div ref={dragRef} className="twk-panel" style={{ right: 16, bottom: 16 }}>
         <div className="twk-hd" onMouseDown={onDragStart}>
           <b>ตั้งค่า — ผู้จัดการ</b>
