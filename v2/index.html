@@ -37,7 +37,16 @@ function showCustomerView(){
  overlay.innerHTML='<div class="customer-wrap"><header class="customer-head"><div class="brandline">ทองคำเยาวราช · GOLDMARK</div><h2>รายละเอียดรับซื้อทองเก่า</h2><div>แสดงน้ำหนักและการคำนวณอย่างโปร่งใส</div></header><section class="customer-total"><div>ยอดรับซื้อรวม</div><div class="amount">'+baht(sumOld())+'</div><div>น้ำหนักสุทธิรวม '+fmt(totalOldGrams())+' กรัม · '+fmt(totalOldWeight())+' บาททองคำ</div></section>'+items+'<p class="customer-note">ราคานี้คำนวณจากข้อมูลที่พนักงานกรอก ณ รายการนี้</p><button class="customer-exit" id="exitCustomerView">กลับหน้าพนักงาน</button></div>';
  document.body.appendChild(overlay);document.body.style.overflow='hidden';
  const close=()=>{overlay.remove();document.body.style.overflow='';if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});};
- document.getElementById('exitCustomerView').onclick=close;
+ const decline=document.createElement('button');decline.className='customer-exit';decline.textContent='ไม่ตกลงขาย · กลับหน้าแรก';overlay.querySelector('.customer-wrap').appendChild(decline);
+ decline.onclick=()=>{close();reset();state.page='estimate';render();};
+ const confirm=document.createElement('button');confirm.className='customer-exit';confirm.style.background='#176b4d';confirm.textContent='ตกลงขาย · ยืนยันใบประเมิน';overlay.querySelector('.customer-wrap').appendChild(confirm);
+ confirm.onclick=()=>{
+   state.history.unshift({action:'รับซื้อทองเก่า · ยืนยันใบประเมิน',result:baht(sumOld())});
+   overlay.querySelector('.customer-wrap').insertAdjacentHTML('beforeend','<p class="customer-note">ยืนยันใบประเมินแล้ว · ยอดรับซื้อ '+baht(sumOld())+'</p><button class="customer-exit" id="printAssessment">พิมพ์ใบประเมิน</button><button class="customer-exit" id="homeAssessment">กลับหน้าแรก</button>');
+   document.getElementById('printAssessment').onclick=()=>window.print();
+   document.getElementById('homeAssessment').onclick=()=>{close();reset();state.page='estimate';render();};
+   confirm.remove();decline.remove();
+ };
  overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
  const esc=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',esc)}};
  document.addEventListener('keydown',esc);
