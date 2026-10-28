@@ -2039,7 +2039,12 @@ function HistorySection({ records, onLookup, query, setQuery }) {
 function Receipt({ record, shopName, branch, onClose }) {
   if (!record) return null;
   const displayName = branch?.name ?? shopName;
-  const ul = record.unit==='baht'?'บาท':record.unit==='salueng'?'สลึง':'กรัม';
+  const items = Array.isArray(record.items) && record.items.length ? record.items : [record];
+  const unitLabel = unit => unit==='baht'?'บาท':unit==='salueng'?'สลึง':'กรัม';
+  const modeLabel = mode => mode==='sell'?'ขายทอง':mode==='buy'?'รับซื้อทอง':'เปลี่ยนทอง';
+  const total = Number.isFinite(Number(record.transactionTotal))
+    ? Number(record.transactionTotal)
+    : items.reduce((sum,item)=>sum+Number(item.total||0),0);
   return (
     <div className="receipt-backdrop" onClick={onClose}>
       <div className="receipt" onClick={e => e.stopPropagation()}>
@@ -2049,20 +2054,28 @@ function Receipt({ record, shopName, branch, onClose }) {
           <div className="receipt-sub">Gold Assessment · ใบประเมินราคา</div>
           <div className="receipt-doc">ใบประเมินราคาทองคำ</div>
           <div className="receipt-code">{record.code}</div>
+          {items.length>1 && <div className="receipt-sub">ธุรกรรมรวม {items.length} รายการ</div>}
         </div>
         <div className="receipt-body">
           <div className="row"><span className="k">วัน เวลา</span><span className="v">{formatThaiDate(record.timestamp,{withTime:true})}</span></div>
-          <div className="row"><span className="k">ประเภทรายการ</span><span className="v">{record.descAction}</span></div>
-          <div className="row"><span className="k">ชนิดทอง</span><span className="v">{record.type==='bar'?'ทองคำแท่ง 96.5%':'ทองรูปพรรณ 96.5%'}</span></div>
-          <div className="row"><span className="k">น้ำหนัก</span><span className="v">{fmt(record.weight,2)} {ul} ({fmt(record.weightBaht,2)} บาท)</span></div>
-          <div className="row"><span className="k">ราคา/บาท</span><span className="v">{fmt(record.pricePerBaht,2)}</span></div>
-          <div className="row"><span className="k">ราคาเนื้อทอง</span><span className="v">{fmt(record.basePrice,2)}</span></div>
-          {record.discount>0 && <div className="row"><span className="k">ส่วนลด</span><span className="v">− {fmt(record.discount,2)}</span></div>}
+          {items.map((item,index) => (
+            <div key={index} style={{borderTop:index===0?'none':'1px solid var(--border)',paddingTop:index===0?0:12,marginTop:index===0?0:12}}>
+              <div className="row"><span className="k">รายการ {index+1}</span><span className="v">{item.descAction || modeLabel(item.mode)}</span></div>
+              <div className="row"><span className="k">ชนิดทอง</span><span className="v">{item.type==='bar'?'ทองคำแท่ง 96.5%':'ทองรูปพรรณ 96.5%'}</span></div>
+              <div className="row"><span className="k">น้ำหนัก</span><span className="v">{fmt(item.weight,2)} {unitLabel(item.unit)} ({fmt(item.weightBaht,2)} บาท)</span></div>
+              <div className="row"><span className="k">ราคา/บาท</span><span className="v">{fmt(item.pricePerBaht,2)}</span></div>
+              <div className="row"><span className="k">ราคาเนื้อทอง</span><span className="v">{fmt(item.basePrice,2)}</span></div>
+              {Number(item.laborFee)>0 && <div className="row"><span className="k">ค่ากำเหน็จ/ค่าเปลี่ยน</span><span className="v">+ {fmt(item.laborFee,2)}</span></div>}
+              {Number(item.discount)>0 && <div className="row"><span className="k">ส่วนลด</span><span className="v">− {fmt(item.discount,2)}</span></div>}
+              {item.mode==='trade' && Number(item.oldBuy)>0 && <div className="row"><span className="k">มูลค่าทองเก่า</span><span className="v">− {fmt(item.oldBuy,2)}</span></div>}
+              <div className="row"><span className="k">{item.mode==='buy'?'ร้านจ่ายลูกค้า':'ยอดรายการ'}</span><span className="v">฿ {fmt(item.total,2)}</span></div>
+            </div>
+          ))}
         </div>
-        <div className="receipt-total"><span className="k">รวมสุทธิ</span><span className="v">฿ {fmt(record.total,2)}</span></div>
+        <div className="receipt-total"><span className="k">{items.length>1?'รวมทุกรายการ':'รวมสุทธิ'}</span><span className="v">฿ {fmt(total,2)}</span></div>
         <div className="receipt-qr">
           <div className="qr-grid" aria-hidden></div>
-          <div className="text">ตรวจสอบความถูกต้องของใบประเมินได้ที่<b>{record.code}</b>ราคาอ้างอิงจากฮั่วเซ่งเฮง ณ เวลาที่ระบุ</div>
+          <div className="text">ตรวจสอบความถูกต้องของใบประเมินได้ที่<b>{record.code}</b>ราคาอ้างอิง ณ เวลาที่ระบุ</div>
         </div>
         <div className="receipt-foot">
           ราคาอ้างอิงจากสมาคมค้าทองคำแห่งประเทศไทย<br/>
