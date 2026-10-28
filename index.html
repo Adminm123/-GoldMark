@@ -911,6 +911,69 @@ button:active { transform: scale(.985); }
  .history-table{min-width:850px}
 }
 @media(prefers-reduced-motion:reduce){.page>section{animation:none!important}*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+
+/* Compact first-screen workflow: prioritize the calculator on mobile */
+@media(max-width:700px){
+  .site-header{height:46px}
+  .site-header .inner{padding:0 12px}
+  .brand-mark{width:25px;height:25px}
+  .brand-text .name-th{font-size:12px}
+  .brand-text .name-en,.header-meta .label{display:none}
+  .header-meta .value{font-size:10px}
+  .app-nav{top:46px;padding:5px 10px;gap:6px}
+  .app-nav button{min-height:38px;border-radius:9px;font-size:12px}
+  .app-nav .nav-symbol{font-size:16px}
+  .page{padding:12px 10px 28px!important}
+  .workspace-intro{margin:0 0 10px;gap:6px}
+  .workspace-kicker{display:none}
+  .workspace-intro h1{font-size:22px;letter-spacing:-.02em}
+  .workspace-intro p{display:none}
+  .connection-state{font-size:10px;padding:4px 8px}
+  .page .section-head{margin:10px 0 8px;padding-bottom:7px;gap:8px}
+  .page .section-head h2{font-size:15px!important}
+  .page .section-head .index,.page .section-head .meta{display:none}
+  .page .prices{border-radius:12px}
+  .page .price-card{padding:10px 12px}
+  .page .price-card .type-label{font-size:9px;margin-bottom:0}
+  .page .price-card .type-th{font-size:14px;margin:0 0 8px}
+  .page .price-card .purity{font-size:9px;margin-left:4px;padding:1px 5px}
+  .page .price-row{padding-top:8px;gap:12px}
+  .page .price-row::before{top:8px}
+  .page .price-row .col .label{font-size:10px;margin-bottom:2px}
+  .page .price-row .col .value{font-size:clamp(22px,6vw,29px);line-height:1.05}
+  .page .price-row .col .unit{font-size:9px;margin-top:2px}
+  .page .delta{top:8px;right:10px;font-size:9px;padding:2px 6px}
+  .page .calc-layout{grid-template-columns:minmax(0,1fr);gap:8px}
+  .page .calc-form,.page .calc-result{padding:12px!important;border-radius:13px!important}
+  .page .field-group{gap:12px}
+  .page .field label{font-size:12px;margin-bottom:4px}
+  .page .field label .th{font-size:13px}
+  .page .seg{padding:2px;border-radius:9px}
+  .page .seg button{min-height:36px;padding:5px 4px;font-size:12px}
+  .page .weight-input{min-height:46px;border-radius:10px}
+  .page .weight-input input{font-size:23px;padding:7px 10px}
+  .page .weight-input .unit-pick button{min-height:42px;padding:0 8px;font-size:11px}
+  .page .simple-input input{min-height:40px;font-size:15px;padding:7px 10px}
+  .page .wizard-head{padding:8px;border-radius:11px}
+  .page .wizard-caption{font-size:10px}
+  .page .wizard-next,.page .wizard-back{min-height:42px;border-radius:10px}
+  .page .transaction-card{min-height:60px;border-radius:12px;padding:9px!important}
+  .page .result-title{margin-bottom:10px}
+  .page .result-amount{font-size:34px;margin:8px 0 4px}
+  .page .result-sub{margin-bottom:12px}
+  .page .result-breakdown{padding-top:10px;gap:6px}
+  .page .action-row{margin-top:12px}
+}
+@media(min-width:701px){
+  .page{padding-top:14px!important}
+  .workspace-intro{margin-bottom:14px}
+  .page .section-head{margin-top:16px}
+  .page .price-card{padding:20px 26px}
+  .page .price-card .type-th{margin-bottom:14px}
+  .page .calc-form,.page .calc-result{padding:20px!important}
+  .page .field-group{gap:15px}
+}
+
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
