@@ -1422,7 +1422,7 @@ const QUICK_W = [
   { label: '5 บาท', detail: '20 สลึง', v: '5' },
 ];
 
-function CustomerDisplay({ displayWeight, displayTotal, pricePerBaht, sellPrice, buyPrice, laborFeeNum, discountNum, mode, goldType, onClose }) {
+function CustomerDisplay({ displayWeight, displayTotal, pricePerBaht, sellPrice, buyPrice, laborFeeNum, discountNum, mode, goldType, onCompare, onClose }) {
   const [compareOpen, setCompareOpen] = useState(false);
   const [compareAction, setCompareAction] = useState('');
   const [compareWeight, setCompareWeight] = useState('1');
@@ -1470,44 +1470,13 @@ function CustomerDisplay({ displayWeight, displayTotal, pricePerBaht, sellPrice,
           <button className="cust-dismiss" onClick={() => setCompareOpen(true)}>เปรียบเทียบราคา</button>
         ) : (
           <div className="cust-compare-options">
-            <p className="cust-subheading">ต้องการเปรียบเทียบรายการแบบไหน?</p>
+            <p className="cust-subheading">ต้องการเปรียบเทียบกับรายการแบบไหน?</p>
             <div className="cust-chips">
-              <button type="button" className={compareAction === 'sellOld' ? 'active' : ''} onClick={() => setCompareAction('sellOld')}>ขายทองเก่าให้ร้าน</button>
-              <button type="button" className={compareAction === 'buyNew' ? 'active' : ''} onClick={() => setCompareAction('buyNew')}>ซื้อทองใหม่จากร้าน</button>
+              <button type="button" onClick={onCompare}>ขายทองเก่า / ซื้อทองใหม่หลายรายการ</button>
             </div>
-            {compareAction && (
-              <>
-                <p className="cust-subheading">ระบุน้ำหนักทองที่ต้องการเปรียบเทียบ</p>
-                <div className="cust-weight-input">
-                  <input aria-label="น้ำหนักทองที่ใช้เปรียบเทียบ" type="number" min="0.01" step="any" value={compareWeight} onChange={e => setCompareWeight(e.target.value)} />
-                  <div className="cust-chips">
-                    {[['baht','บาท'],['salueng','สลึง'],['gram','กรัม']].map(([u,label]) => (
-                      <button key={u} type="button" className={compareUnit === u ? 'active' : ''} onClick={() => setCompareUnit(u)}>{label}</button>
-                    ))}
-                  </div>
-                </div>
-                {compareAction === 'buyNew' && (
-                  <div className="cust-extra-inputs">
-                    <label>ค่ากำเหน็จ (บาท)
-                      <input type="number" min="0" value={compareLabor} placeholder={String(defaultCompareLabor)} onChange={e => setCompareLabor(e.target.value)} />
-                    </label>
-                    <label>ส่วนลด (บาท)
-                      <input type="number" min="0" value={compareDiscount} onChange={e => setCompareDiscount(e.target.value)} />
-                    </label>
-                  </div>
-                )}
-                <div className="cust-compare-preview">
-                  <span>{compareTitle}</span>
-                  <strong>฿{fmt(compareTotal, 0)}</strong>
-                  <small>{compareAction === 'sellOld' ? 'คำนวณจากราคารับซื้อ × น้ำหนัก' : 'คำนวณจากราคาขายออก × น้ำหนัก + ค่ากำเหน็จ − ส่วนลด'}</small>
-                </div>
-              </>
-            )}
+            <p className="cust-note">เพิ่มทองเก่าและทองใหม่ได้หลายเส้น แล้วดูยอดเงินส่วนต่างรวมในหน้าถัดไป</p>
           </div>
         )}
-        <p className="cust-disclaimer">ราคาที่แสดงเป็นราคาเบื้องต้น กรุณาสอบถามพนักงานเพื่อยืนยันราคาก่อนทำรายการ</p>
-        {compareOpen && <button className="cust-dismiss" onClick={() => { setCompareOpen(false); setCompareAction(''); }}>เสร็จสิ้นการเปรียบเทียบ</button>}
-        <button className="cust-dismiss" onClick={onClose}>ปิดหน้าราคา</button>
       </div>
     </div>
   );
@@ -1525,45 +1494,6 @@ function getTierFee(weightBaht, tiers, fallback) {
 }
 
 /* ── Calculator ── */
-function TradeBasket({ prices, branch, onClose }) {
-  const [oldItems,setOldItems]=useState([]), [newItems,setNewItems]=useState([]);
-  const [side,setSide]=useState('old'), [goldType,setGoldType]=useState('jewelry');
-  const [weight,setWeight]=useState('1'), [unit,setUnit]=useState('baht'), [labor,setLabor]=useState(''), [discount,setDiscount]=useState('0');
-  const cfg=branch?.branch_configs?.find(c=>c.gold_type===goldType)??null, weightBaht=toBaht(weight,unit);
-  const sellPrice=Number(prices?.bar?.sell||0), buyPrice=goldType==='bar'?Number(prices?.bar?.buy||0):Math.round(Number(prices?.bar?.buy||0)*(1-(cfg?.jewelry_buy_deduct_pct??2)/100));
-  const autoLabor=getTierFee(weightBaht,cfg?.labor_fee_json,cfg?.labor_fee_min??0), laborNum=labor===''?autoLabor:(Number(labor)||0);
-  const oldTotal=oldItems.reduce((n,x)=>n+x.amount,0), newTotal=newItems.reduce((n,x)=>n+x.amount,0), net=newTotal-oldTotal;
-  const addItem=()=>{if(!(weightBaht>0)){window.alert('กรุณากรอกน้ำหนักมากกว่า 0');return;}
-    const item=side==='old'?{id:Date.now()+Math.random(),type:goldType,weight:weightBaht,price:buyPrice,amount:Math.round(weightBaht*buyPrice)}:
-    {id:Date.now()+Math.random(),type:goldType,weight:weightBaht,price:sellPrice,labor:laborNum,discount:Number(discount)||0,amount:Math.max(0,Math.round(weightBaht*sellPrice+laborNum-(Number(discount)||0)))};
-    if(side==='old')setOldItems(p=>[...p,item]);else setNewItems(p=>[...p,item]);setWeight('1');setUnit('baht');setLabor('');setDiscount('0');};
-  const itemLabel=x=>(x.type==='bar'?'ทองแท่ง':'ทองรูปพรรณ')+' · '+fmt(x.weight,2)+' บาท';
-  const panel={border:'1px solid var(--border)',borderRadius:12,padding:14,marginBottom:12};
-  const line={display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,padding:'8px 0',borderBottom:'1px solid var(--border)',fontSize:13};
-  return <div role="dialog" aria-modal="true" aria-label="คำนวณขายทองเก่าและซื้อทองใหม่" style={{position:'fixed',inset:0,zIndex:9999,background:'rgba(12,15,20,.75)',overflowY:'auto',padding:12}}>
-    <div style={{maxWidth:780,margin:'16px auto',background:'var(--bg, white)',color:'var(--text, #222)',borderRadius:16,padding:18}}>
-      <div style={{display:'flex',justifyContent:'space-between',gap:10,alignItems:'center'}}><div><small>MULTI-ITEM TRADE</small><h2 style={{margin:'5px 0'}}>ขายทองเก่า + ซื้อทองใหม่</h2></div><button type="button" className="btn-ghost" onClick={onClose}>ปิด ✕</button></div>
-      <p style={{fontSize:13,color:'var(--text-mute)'}}>เพิ่มทองเก่าและทองใหม่ได้หลายชิ้น ระบบรวมยอดให้โดยอัตโนมัติ</p>
-      <div style={panel}>
-        <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}><button type="button" className={side==='old'?'btn-primary':'btn-ghost'} onClick={()=>setSide('old')}>＋ เพิ่มทองเก่าที่ขาย</button><button type="button" className={side==='new'?'btn-primary':'btn-ghost'} onClick={()=>setSide('new')}>＋ เพิ่มทองใหม่ที่ซื้อ</button></div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(120px,1fr))',gap:10}}>
-          <label style={{fontSize:12}}>ชนิดทอง<select value={goldType} onChange={e=>setGoldType(e.target.value)} style={{display:'block',width:'100%',padding:10,marginTop:5}}><option value="jewelry">ทองรูปพรรณ</option><option value="bar">ทองคำแท่ง</option></select></label>
-          <label style={{fontSize:12}}>น้ำหนัก<input value={weight} inputMode="decimal" onChange={e=>setWeight(e.target.value.replace(/[^0-9.]/g,''))} style={{display:'block',width:'100%',padding:10,marginTop:5}} /></label>
-          <label style={{fontSize:12}}>หน่วย<select value={unit} onChange={e=>setUnit(e.target.value)} style={{display:'block',width:'100%',padding:10,marginTop:5}}><option value="baht">บาท</option><option value="salueng">สลึง</option><option value="gram">กรัม</option></select></label>
-          {side==='new'&&<><label style={{fontSize:12}}>ค่ากำเหน็จ<input value={labor} placeholder={'อัตโนมัติ '+fmt(autoLabor,0)} inputMode="numeric" onChange={e=>setLabor(e.target.value.replace(/[^0-9]/g,''))} style={{display:'block',width:'100%',padding:10,marginTop:5}} /></label><label style={{fontSize:12}}>ส่วนลด<input value={discount} inputMode="numeric" onChange={e=>setDiscount(e.target.value.replace(/[^0-9]/g,''))} style={{display:'block',width:'100%',padding:10,marginTop:5}} /></label></>}
-        </div>
-        <div style={{fontSize:12,color:'var(--text-mute)',margin:'10px 0'}}>น้ำหนักเทียบเท่า {fmt(weightBaht,2)} บาท · {side==='old'?'รับซื้อ':'ขายออก'} {fmt(side==='old'?buyPrice:sellPrice,0)} บาท/บาทน้ำหนัก</div><button type="button" className="btn-primary" onClick={addItem}>เพิ่มรายการนี้</button>
-      </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:12}}>
-        <div style={panel}><strong>ทองเก่าที่ลูกค้าขาย ({oldItems.length})</strong>{oldItems.length===0&&<p style={{fontSize:12,color:'var(--text-mute)'}}>ยังไม่มีรายการ</p>}{oldItems.map((x,i)=><div key={x.id} style={line}><span>{i+1}. {itemLabel(x)}<br/><small>{fmt(x.price,0)} บาท/บาทน้ำหนัก</small></span><strong>฿{fmt(x.amount,0)}</strong><button type="button" className="btn-ghost" onClick={()=>setOldItems(p=>p.filter(y=>y.id!==x.id))}>ลบ</button></div>)}<div style={{textAlign:'right',fontWeight:700,paddingTop:10}}>รวมรับซื้อ ฿{fmt(oldTotal,0)}</div></div>
-        <div style={panel}><strong>ทองใหม่ที่ลูกค้าซื้อ ({newItems.length})</strong>{newItems.length===0&&<p style={{fontSize:12,color:'var(--text-mute)'}}>ยังไม่มีรายการ</p>}{newItems.map((x,i)=><div key={x.id} style={line}><span>{i+1}. {itemLabel(x)}<br/><small>กำเหน็จ ฿{fmt(x.labor||0,0)} · ส่วนลด ฿{fmt(x.discount||0,0)}</small></span><strong>฿{fmt(x.amount,0)}</strong><button type="button" className="btn-ghost" onClick={()=>setNewItems(p=>p.filter(y=>y.id!==x.id))}>ลบ</button></div>)}<div style={{textAlign:'right',fontWeight:700,paddingTop:10}}>รวมซื้อ ฿{fmt(newTotal,0)}</div></div>
-      </div>
-      <div style={{...panel,marginTop:4,background:'var(--panel, #f7f4ee)'}}><div style={{fontSize:12,color:'var(--text-mute)'}}>ยอดซื้อใหม่ − ยอดรับซื้อทองเก่า</div><div style={{fontSize:30,fontWeight:800,marginTop:6}}>฿{fmt(Math.abs(net),0)}</div><strong>{net>0?'ลูกค้าต้องจ่ายเพิ่ม':net<0?'ร้านต้องคืนเงินลูกค้า':'ยอดเท่ากัน ไม่ต้องชำระเพิ่ม'}</strong><p style={{fontSize:11,color:'var(--text-mute)'}}>เป็นยอดประเมินตามราคาปัจจุบัน โปรดตรวจสอบราคาก่อนตกลงซื้อขาย</p></div>
-      <div style={{display:'flex',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}><button type="button" className="btn-ghost" onClick={()=>{setOldItems([]);setNewItems([]);}}>ล้างรายการทั้งหมด</button><button type="button" className="btn-primary" onClick={()=>window.print()}>พิมพ์สรุป</button></div>
-    </div>
-  </div>;
-}
-
 function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
   const [basketOpen, setBasketOpen] = useState(false);
   const [txMode, setTxMode] = useState('sell');      // sell | buy | trade
@@ -1707,7 +1637,6 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
     <section>
       <div className="section-head">
         <div className="title"><span className="index">No. II.</span><h2>คำนวณราคา</h2></div>
-        <button type="button" className="btn-primary" onClick={() => setBasketOpen(true)}>ขายเก่า + ซื้อใหม่หลายชิ้น</button>
       </div>
       <div className="wizard-head">
         <div className="wizard-progress" aria-label={`ขั้นตอนที่ ${step} จาก ${stepCount}`}>
@@ -1933,8 +1862,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
         }}>ถัดไป <span aria-hidden="true">→</span></button> : <button className="wizard-next" onClick={() => setStep(txMode==='buy'?2:3)}>แก้ไขข้อมูล</button>}
       </div>
     </section>
-    {basketOpen && <TradeBasket prices={prices} branch={branch} onClose={() => setBasketOpen(false)} />}
-    {showCustomer && (
+    {basketOpen && <TradeBasket prices={prices} branch={branch} onClose={() => setBasketOpen(false)} />}\n    {showCustomer && (
       <CustomerDisplay
         displayWeight={weightBaht}
         displayTotal={txMode === 'buy' ? calc.shopReturns : (calc.customerPays > 0 ? calc.customerPays : calc.shopReturns)}
@@ -1945,6 +1873,7 @@ function Calculator({ prices, onCommit, apiStatus, apiSell, branch }) {
         discountNum={discountNum}
         mode={txMode}
         goldType={goldType}
+        onCompare={() => setBasketOpen(true)}
         onClose={() => setShowCustomer(false)}
       />
     )}
