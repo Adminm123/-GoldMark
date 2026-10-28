@@ -8,7 +8,7 @@
 <main class="content" id="main"></main><div class="foot">GoldMark V2 · ต้นแบบทดสอบเท่านั้น · ยังไม่บันทึกลงฐานข้อมูล</div></div>
 <div class="sticky"><div class="stickyinner"><button class="btn secondary" id="back">ย้อนกลับ</button><button class="btn primary" id="next">เริ่มประเมิน</button></div></div>
 <script>
-const state={page:'estimate',step:'menu',action:'buy',gold:'jewelry',weight:'1',labor:'0',discount:'0',sell:70000,buy:69000,deduct:2,old:[],fresh:[],history:[],compare:false,compareWeight:'1',depositRate:1.25};
+const state={page:'estimate',step:'menu',action:'buy',gold:'jewelry',weight:'1',labor:'0',discount:'0',sell:70000,buy:69000,deduct:5,old:[],fresh:[],history:[],compare:false,compareWeight:'1',depositRate:1.25};
 const fmt=n=>Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:2});
 const baht=n=>'฿'+fmt(n);
 const weightName=w=>({0.25:'1 สลึง',0.5:'2 สลึง',0.75:'3 สลึง',1:'1 บาท',2:'2 บาท',4:'4 บาท'}[Number(w)]||w+' บาท');
