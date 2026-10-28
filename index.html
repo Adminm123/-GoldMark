@@ -1053,15 +1053,17 @@ function CommitModal({ record, branch, onSuccess, onCancel }) {
 
     if (!emp) { setError('ไม่พบรหัสพนักงานในสาขานี้ กรุณาตรวจสอบ'); setSaving(false); return; }
 
-    const { error: err } = await sb.from('assessments').insert({
-      ref_code: record.code, branch_id: branch.id, employee_id_card: empId,
-      gold_type: record.type, mode: record.mode, weight: record.weight,
-      unit: record.unit, weight_baht: record.weightBaht,
-      price_per_baht: record.pricePerBaht, api_price_sell: record.apiSell ?? null,
-      labor_fee: record.laborFee ?? 0, discount: record.discount ?? 0, total: record.total,
-    });
+    const rows = (Array.isArray(record.items) && record.items.length ? record.items : [record]).map((item, index) => ({
+      ref_code: record.items && record.items.length > 1 ? record.code + '-' + (index + 1) : record.code,
+      branch_id: branch.id, employee_id_card: empId,
+      gold_type: item.type, mode: item.mode, weight: item.weight,
+      unit: item.unit, weight_baht: item.weightBaht,
+      price_per_baht: item.pricePerBaht, api_price_sell: item.apiSell ?? null,
+      labor_fee: item.laborFee ?? 0, discount: item.discount ?? 0, total: item.total,
+    }));
+    const { error: err } = await sb.from('assessments').insert(rows);
 
-    if (err) { setError('บันทึกไม่สำเร็จ: ' + err.message); setSaving(false); return; }
+    if (err) { setError('บันทึกไม่สำเร็จ: ' + err.message + ' · หากเป็นหลายรายการ ให้ตรวจสอบว่าตารางรองรับการบันทึกหลายแถว'); setSaving(false); return; }
     onSuccess(emp.name);
   };
 
