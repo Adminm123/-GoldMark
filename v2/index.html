@@ -40,6 +40,8 @@ function showCustomerView(){
  overlay.innerHTML='<div class="customer-wrap"><header class="customer-head"><div class="brandline">ทองคำเยาวราช · GOLDMARK</div><h2>ราคาประเมินรับซื้อทองเก่า</h2></header><section class="customer-total"><div>ยอดรับซื้อโดยประมาณ</div><div class="amount">'+baht(sumOld())+'</div></section>'+items+'<p class="customer-note">ใช้เกณฑ์ 15.20 กรัมต่อบาท และยอมรับส่วนต่างได้ 0.04 กรัมต่อบาท (เช่น 15.16 กรัมถือว่าเต็ม) หลังหักส่วนลดรับซื้อ '+fmt(state.deduct)+'% แล้ว</p></div>';
  document.body.appendChild(overlay);document.body.style.overflow='hidden';
  const close=()=>{overlay.remove();document.body.style.overflow='';if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});};
+ const backToItems=document.createElement('button');backToItems.className='customer-exit';backToItems.style.background='#ffffff';backToItems.style.color='#24211f';backToItems.style.border='1px solid #e9e4dd';backToItems.textContent='กลับไปตรวจสอบรายการ';overlay.querySelector('.customer-wrap').appendChild(backToItems);
+ backToItems.onclick=()=>{close();state.page='estimate';state.step='result';render();};
  const decline=document.createElement('button');decline.className='customer-exit';decline.textContent='ไม่ประสงค์ขาย · ยกเลิกการประเมิน';overlay.querySelector('.customer-wrap').appendChild(decline);
  decline.onclick=()=>{close();reset();state.page='estimate';render();};
  const confirm=document.createElement('button');confirm.className='customer-exit';confirm.style.background='#176b4d';confirm.textContent='ยืนยันการขายและจัดทำใบประเมิน';overlay.querySelector('.customer-wrap').appendChild(confirm);
@@ -49,7 +51,7 @@ function showCustomerView(){
   overlay.querySelector('.customer-wrap').insertAdjacentHTML('beforeend','<p class="customer-note">เอกสารใบประเมินราคา ไม่ใช่หลักฐานการรับชำระเงิน</p><button class="customer-exit" id="printAssessment">พิมพ์ใบประเมิน</button><button class="customer-exit" id="homeAssessment">กลับหน้าแรก</button>');
   document.getElementById('printAssessment').onclick=()=>window.print();
   document.getElementById('homeAssessment').onclick=()=>{close();reset();state.page='estimate';render();};
-  confirm.remove();decline.remove();
+  confirm.remove();decline.remove();backToItems.remove();
  };
  overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
  const esc=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',esc)}};
